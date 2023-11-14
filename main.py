@@ -4,7 +4,7 @@ import tiktoken
 import glob
 import json
 from langchain.evaluation import load_evaluator
-from langchain.chat_models import ChatOpenAI
+from langchain.chat_models import ChatOpenAI, ChatAnthropic
 from langchain.schema import HumanMessage, SystemMessage
 from dotenv import load_dotenv
 import numpy as np
@@ -77,13 +77,13 @@ def generate_context(needle, context_length, depth_percent):
 
     return context
 
-def evaluate_response(response, needle, question_to_ask):
+def evaluate_response(response, needle, question_to_ask, evaluation_model):
     accuracy_criteria = {
         "accuracy": """
         Score 1: The answer is completely unrelated to the reference.
         Score 3: The answer has minor relevance but does not align with the reference.
         Score 5: The answer has moderate relevance but contains inaccuracies.
-        Score 7: The answer aligns with the reference but has minor errors or omissions.
+        Score 7: The answer aligns with the reference but has minor omissions.
         Score 10: The answer is completely accurate and aligns perfectly with the reference.
         Keep your explanations extremely short, just give the score
         """
@@ -93,7 +93,7 @@ def evaluate_response(response, needle, question_to_ask):
     evaluator = load_evaluator(
         "labeled_score_string",
         criteria=accuracy_criteria,
-        llm=ChatOpenAI(model="gpt-4", temperature=0, openai_api_key = os.getenv('OPENAI_API_KEY', 'YourAPIKey')),
+        llm=evaluation_model,
     )
 
     eval_result = evaluator.evaluate_strings(
@@ -109,7 +109,7 @@ def evaluate_response(response, needle, question_to_ask):
 
     return int(eval_result['score'])
 
-def result_exists(results, context_length, depth_percent, version):
+def result_exists(results, context_length, depth_percent, version, model):
     """
     Checks to see if a result has already been evaluated or not
     """
@@ -118,6 +118,7 @@ def result_exists(results, context_length, depth_percent, version):
         context_length_met = result['context_length'] == context_length
         depth_percent_met = result['depth_percent'] == depth_percent
         version_met = result.get('version', 1) == version
+        model_met = result['model'] == model
         conditions_met.append(context_length_met and depth_percent_met and version_met)
     return any(conditions_met)
 
@@ -125,7 +126,6 @@ if __name__ == "__main__":
     needle = """
     The best thing to do in San Francisco is eat a sandwich and sit in Dolores Park on a sunny day.
     """
-
     question_to_ask = "What is the most fun thing to do in San Francisco?"
 
     # The code will check to see if a context_length, depth percent and version number have already been checked yet
@@ -133,7 +133,7 @@ if __name__ == "__main__":
     # If you're just testing, then leave as version=1
     results_version = 1 
 
-    # This will produce a list of context lengths for each experiment iteration
+    # This will produce a list of context lengths for each experiment iteration. Make sure the max context length is within the bounds of your models limits.
     context_lengths = np.round(np.linspace(1000, 128000, num=15, endpoint=True)).astype(int)
 
     # This will product a list of document depths to place your random statement (needle) at.
@@ -141,7 +141,13 @@ if __name__ == "__main__":
     document_depth_percents = np.round(np.linspace(0, 100, num=15, endpoint=True)).astype(int)
 
     # The model we are testing. As of now it's set up for chat models with OpenAI
-    model_to_test = ChatOpenAI(model='gpt-4-1106-preview', temperature=0, openai_api_key = os.getenv('OPENAI_API_KEY', 'YourAPIKey'))
+    # model_to_test = ChatOpenAI(model='gpt-4-1106-preview', temperature=0, openai_api_key = os.getenv('OPENAI_API_KEY', 'YourAPIKey'))
+    model_to_test = ChatAnthropic(model='claude-2', temperature=0, anthropic_api_key = os.getenv('ANTHROPIC_API_KEY', 'YourAPIKey'))
+
+    # This will get logged on your results
+    model_to_test_description = 'claude-2'
+
+    evaluation_model  = ChatOpenAI(model="gpt-4", temperature=0, openai_api_key = os.getenv('OPENAI_API_KEY', 'YourAPIKey'))
 
     # Run through each iteration of context_lengths and depths
     for context_length in context_lengths:
@@ -156,7 +162,7 @@ if __name__ == "__main__":
 
             # Checks to see if you've already checked a length/percent/version.
             # This helps if the program stop running and you want to restart later
-            if result_exists(results, context_length, depth_percent, results_version):
+            if result_exists(results, context_length, depth_percent, results_version, model_to_test_description):
                 continue
 
             # Go generate the required length context and place your needle statement in
@@ -173,8 +179,8 @@ if __name__ == "__main__":
                     content=context
                 ),
                 HumanMessage(
-                    # This is the question you'll ask to the model to try and retrieve your random statement/needle.
-                    content="What is the most fun thing to do in San Francisco based on my context? Don't give information outside the document"
+                    # This is the question you'll ask to the model to tr≠≠y and retrieve your random statement/needle.
+                    content="What is the most fun thing to do in San Francico based on the context? Don't give information outside the document or repeat your findings"
                 ),
             ]
 
@@ -182,14 +188,11 @@ if __name__ == "__main__":
             response = model_to_test(messages)
 
             # Compare the reponse to the actual needle you placed
-            score = evaluate_response(response, needle, question_to_ask)
-
-            # Optional, print out bad responses if you want
-            if score != 10:
-                print (f"Bad Answer: {response}")
+            score = evaluate_response(response, needle, question_to_ask, evaluation_model)
 
             results.append({
                 # 'context' : context, # Uncomment this line if you'd like to save the context the model was asked to retrieve from. Warning: This will become very large.
+                'model' : model_to_test_description,
                 'context_length' : int(context_length),
                 'depth_percent' : int(depth_percent),
                 'version' : results_version,
@@ -198,7 +201,11 @@ if __name__ == "__main__":
                 'score' : score
             })
 
-            print (f"#{len(results)} Context: {context_length}, Depth: {depth_percent}, Score: {score}")
+            print (f"Result #: {len(results)}/{len(context_lengths) * len(document_depth_percents)}")
+            print (f"Context: {context_length} tokens")
+            print (f"Depth: {depth_percent}%")
+            print (f"Score: {score}")
+            print (f"Response: {response.content}\n")
 
             # Save results to a JSON file each run
             with open('results.json', 'w') as f:
@@ -207,5 +214,5 @@ if __name__ == "__main__":
             # Optional. Sleep for a bit to stay under the rate limit
             # Rate limit is 150K tokens/min so it's set at 120K for some cushion
             sleep_time = (context_length / 120000)*60
-            print (f"Sleeping: {sleep_time}\n")
+            # print (f"Sleeping: {sleep_time}\n")
             time.sleep(sleep_time)
