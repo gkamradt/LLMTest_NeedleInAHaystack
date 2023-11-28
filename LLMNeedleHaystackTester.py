@@ -11,6 +11,8 @@ import numpy as np
 from openai import AsyncOpenAI
 import asyncio
 from asyncio import Semaphore
+from datetime import datetime, timezone
+import time
 
 load_dotenv()
 
@@ -42,9 +44,7 @@ class LLMNeedleHaystackTester:
                  final_context_length_buffer = 200,
                  seconds_to_sleep_between_completions = None,
                  print_ongoing_status = True):
-        """
-        Initializes the LLMNeedleHaystackTester with a needle, haystack and depth_percent.
-        
+        """        
         :param needle: The needle to be found in the haystack. Default is None.
         :param haystack_dir: The directory of text files to use as background context (or a haystack) in which the needle is to be found. Default is Paul Graham Essays.
         :param retrieval_question: The question which with to prompt the model to do the retrieval.
@@ -83,6 +83,7 @@ class LLMNeedleHaystackTester:
         self.seconds_to_sleep_between_completions = seconds_to_sleep_between_completions
         self.print_ongoing_status = print_ongoing_status
         self.model_provider = model_provider
+        self.testing_results = []
 
         if context_lengths is None:
             if context_lengths_min is None or context_lengths_max is None or context_lengths_num_intervals is None:
@@ -108,6 +109,9 @@ class LLMNeedleHaystackTester:
         
         if model_provider not in ["OpenAI", "Anthropic"]:
             raise ValueError("model_provider must be either 'OpenAI' or 'Anthropic'")
+        
+        if model_provider == "Anthropic" and "claude" not in model_name:
+            raise ValueError("If the model provider is 'Anthropic', the model name must include 'claude'. See https://docs.anthropic.com/claude/reference/selecting-a-model for more details on Anthropic models")
         
         self.openai_api_key = openai_api_key or os.getenv('OPENAI_API_KEY')
         self.model_name = model_name
@@ -164,15 +168,18 @@ class LLMNeedleHaystackTester:
 
     def generate_prompt(self, context):
         if self.model_provider == "Anthropic":
-            return f"""Human: You are a helpful AI bot that answers questions for a user. Keep your response short and direct. Here is some context. Please read it carefully. 
-                        <context>
-                        {context}
-                        </context>
-                        Now that you've read the context, please answer this question:
-                        <question>{self.retrieval_question}</question>
-                        Base your answer strictly on the context, without reference to outside information, and with minimal to no equivocation. Thank you.
+            return f"""Human: You are a close-reading bot with a great memory who answers questions for users. I'm going to give you the text of some essays. Amidst these essays ("the haystack") I've inserted a sentence ("the needle") that contains an answer to the user's question. Here's the question:
+                <question>{self.retrieval_question}</question>
+                Here's the text of the essays. The answer appears in it somewhere.
+                <haystack>
+                {context}
+                </haystack>
+                Now that you've read the context, please answer the user's question, repeated one more time for ease of reference:
+                <question>{self.retrieval_question}</question>
 
-                        Assistant:"""
+                To do so, first find the sentence from the haystack that contains the answer (there is such a sentence, I promise!) and put it inside <most_relevant_sentence> XML tags. Then, put your answer in <answer> tags. Base your answer strictly on the context, without reference to outside information. Thank you.
+
+                Assistant:"""
         elif self.model_provider == "OpenAI":
             # Generate the prompt for the Anthropic model
             # Replace the following line with the appropriate prompt structure
@@ -204,6 +211,8 @@ class LLMNeedleHaystackTester:
         # Prepare your message to send to the model you're going to evaluate
         prompt = self.generate_prompt(context)
 
+        test_start_time = time.time()
+
         # Go see if the model can answer the question to pull out your random fact
         if self.model_provider == "OpenAI":
             response = await self.model_to_test.chat.completions.create(
@@ -222,6 +231,9 @@ class LLMNeedleHaystackTester:
             )
             response = response.completion
 
+        test_end_time = time.time()
+        test_elapsed_time = test_end_time - test_start_time
+
         # Compare the reponse to the actual needle you placed
         score = self.evaluate_response(response)
 
@@ -234,10 +246,16 @@ class LLMNeedleHaystackTester:
             'version' : self.results_version,
             'needle' : self.needle,
             'model_response' : response,
-            'score' : score
+            'score' : score,
+            'test_duration_seconds' : test_elapsed_time,
+            'test_timestamp_utc' : datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S%z')
         }
 
+        self.testing_results.append(results)
+
         if self.print_ongoing_status:
+            print (f"-- Test Summary -- ")
+            print (f"Duration: {test_elapsed_time:.1f} seconds")
             print (f"Context: {context_length} tokens")
             print (f"Depth: {depth_percent}%")
             print (f"Score: {score}")
@@ -423,11 +441,25 @@ class LLMNeedleHaystackTester:
             context = self.decode_tokens(tokens, context_length)
         return context
     
+    def get_results(self):
+        return self.testing_results
+    
+    def print_start_test_summary(self):
+        print ("\n")
+        print ("Starting Needle In A Haystack Testing")
+        print (f"- Model: {self.model_name}")
+        print (f"- Context Lengths: {len(self.context_lengths)}, Min: {min(self.context_lengths)}, Max: {max(self.context_lengths)}")
+        print (f"- Document Depths: {len(self.document_depth_percents)}, Min: {min(self.document_depth_percents)}%, Max: {max(self.document_depth_percents)}%")
+        print (f"- Needle: {self.needle.strip()}")
+        print ("\n\n")
+
     def start_test(self):
+        if self.print_ongoing_status:
+            self.print_start_test_summary()
         asyncio.run(self.run_test())
 
 if __name__ == "__main__":
     # Tons of defaults set, check out the LLMNeedleHaystackTester's init for more info
-    ht = LLMNeedleHaystackTester()
+    ht = LLMNeedleHaystackTester(document_depth_percent_interval_type='sigmoid', model_provider='Anthropic', model_name='claude-2.1')
 
     ht.start_test()

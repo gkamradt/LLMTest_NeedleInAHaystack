@@ -1,25 +1,54 @@
-# Pressure Testing GPT-4-128K
+# Needle In A Haystack - Pressure Testing LLMs
 
-A simple 'needle in a haystack' analysis to test in-context retrieval ability of GPT-4-128K context
+Supported model providers: OpenAI, Anthropic
+
+A simple 'needle in a haystack' analysis to test in-context retrieval ability of long context LLMs.
+
+Get the behind the scenes on the [overview video](https://youtu.be/KwRRuiCCdmc).
 
 **The Test**
-1. Place a random fact or statement (the 'needle') in the middle of a long context window
+1. Place a random fact or statement (the 'needle') in the middle of a long context window (the 'haystack')
 2. Ask the model to retrieve this statement
 3. Iterate over various document depths (where the needle is placed) and context lengths to measure performance
 
-This is the code that backed [this tweet](https://twitter.com/GregKamradt/status/1722386725635580292).
+This is the code that backed [this OpenAI](https://twitter.com/GregKamradt/status/1722386725635580292) and [Anthropic analysis](https://twitter.com/GregKamradt/status/1727018183608193393).
 
-If ran, this script will populate `results.json` with evaluation information. Original results are held within `/original_results`, though they don't have as much information as they should. The current script gathers and saves more data.
+If ran and `save_results = True`, then this script will populate a `result/` directory with evaluation information. Due to potential concurrent requests each new test will be saved as a few file.
 
-The key pieces:
+I've put the results from the original tests in `/original_results`. I've upgraded the script since those test were ran so the data formats may not match your script results.
 
- * `needle` : The random fact or statement you'll place in your context
- * `question_to_ask`: The question you'll ask your model which will prompt it to find your needle/statement
-*  `results_version`: Set to 1. If you'd like to run this test multiple times for more data points change this value to your version number
-* `context_lengths` (List[int]): The list of various context lengths you'll test. In the original test this was set to 15 evenly spaced iterations between 1K and 128K (the max)
-* `document_depth_percents` (List[int]): The list of various depths to place your random fact 
-* `model_to_test`: The original test chose `gpt-4-1106-preview`. You can easily change this to any chat model from OpenAI, or any other model w/ a bit of code adjustments
+The key parameters:
+* `needle` - The statement or fact which will be placed in your context ('haystack')
+* `haystack_dir` - The directory which contains the text files to load as background context. Only text files are supported
+* `retrieval_question` - The question with which to retrieve your needle in the background context
+* `results_version` - You may want to run your test multiple times for the same combination of length/depth, change the version number if so
+* `context_lengths_min` - The starting point of your context lengths list to iterate
+* `context_lengths_max` - The ending point of your context lengths list to iterate
+* `context_lengths_num_intervals` - The number of intervals between your min/max to iterate through
+* `document_depth_percent_min` - The starting point of your document depths. Should be int > 0
+* `document_depth_percent_max` - The ending point of your document depths. Should be int < 100
+* `document_depth_percent_intervals` - The number of iterations to do between your min/max points
+* `document_depth_percent_interval_type` - Determines the distribution of depths to iterate over. 'linear' or 'sigmoid
+* `model_provider` - 'OpenAI' or 'Anthropic'
+* `model_name` - The name of the model you'd like to test. Should match the exact value which needs to be passed to the api. Ex: `gpt-4-1106-preview`
+* `save_results` - Whether or not you'd like to save your results to file. They will be temporarily saved in the object regardless. True/False
+* `save_contexts` - Whether or not you'd like to save your contexts to file. **Warning** these will get very long. True/False
+
+Other Parameters:
+* `context_lengths` - A custom set of context lengths. This will override the values set for `context_lengths_min`, max, and intervals if set
+* `document_depth_percents` - A custom set of document depths lengths. This will override the values set for `document_depth_percent_min`, max, and intervals if set
+* `openai_api_key` - Must be supplied. GPT-4 is used for evaluation. Can either be passed when creating the object or an environment variable
+* `anthropic_api_key` - Only needed if testing Anthropic models. Can either be passed when creating the object or an environment variable
+* `num_concurrent_requests` - Default: 1. Set higher if you'd like to run more requests in parallel. Keep in mind rate limits.
+* `final_context_length_buffer` - The amount of context to take off each input to account for system messages and output tokens. This can be more intelligent but using a static value for now. Default 200 tokens.
+* `seconds_to_sleep_between_completions` - Default: None, set # of seconds if you'd like to slow down your requests
+* `print_ongoing_status` - Default: True, whether or not to print the status of test as they complete
 
 ## Results Visualization
-![alt text](ResultsVisualization.png "Title")
-(Made via pivoting the results, averaging the multiple runs, and adding labels in google slides)
+`LLMNeedleInHaystackVisualization.ipynb` holds the code to make the pivot table visualization. The pivot table was then transfered to Google Slides for custom annotations and formatting.
+
+## OpenAI's GPT-4-128K (Run 11/8/2023)
+<img src="ResultsVisualization.png" alt="GPT-4-128 Context Testing" width="800"/>
+
+## Anthropic's Claude 2.1 (Run 11/21/2023)
+<img src="Claude_2_1_testing.png" alt="GPT-4-128 Context Testing" width="800"/>
