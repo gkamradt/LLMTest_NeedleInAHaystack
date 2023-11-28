@@ -48,7 +48,7 @@ Other Parameters:
 `LLMNeedleInHaystackVisualization.ipynb` holds the code to make the pivot table visualization. The pivot table was then transfered to Google Slides for custom annotations and formatting.
 
 ## OpenAI's GPT-4-128K (Run 11/8/2023)
-<img src="ResultsVisualization.png" alt="GPT-4-128 Context Testing" width="800"/>
+<img src="img/GPT_4_testing.png" alt="GPT-4-128 Context Testing" width="800"/>
 
 ## Anthropic's Claude 2.1 (Run 11/21/2023)
-<img src="Claude_2_1_testing.png" alt="GPT-4-128 Context Testing" width="800"/>
+<img src="img/Claude_2_1_testing.png" alt="GPT-4-128 Context Testing" width="800"/>
