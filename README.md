@@ -8,6 +8,10 @@ Get the behind the scenes on the [overview video](https://youtu.be/KwRRuiCCdmc).
 
 ![GPT-4-128 Context Testing](img/NeedleHaystackCodeSnippet.png)
 
+```
+git clone https://github.com/gkamradt/LLMTest_NeedleInAHaystack.git
+```
+
 ## The Test
 1. Place a random fact or statement (the 'needle') in the middle of a long context window (the 'haystack')
 2. Ask the model to retrieve this statement
