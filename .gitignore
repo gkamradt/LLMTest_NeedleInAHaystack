@@ -80,6 +80,9 @@ target/
 *.ipynb
 .DS_Store
 
+# Keep the viz though
+!CreateVizFromLLMTesting.ipynb
+
 # IPython
 profile_default/
 ipython_config.py
