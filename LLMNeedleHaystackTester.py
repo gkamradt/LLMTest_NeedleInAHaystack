@@ -446,7 +446,7 @@ class LLMNeedleHaystackTester:
     
     def print_start_test_summary(self):
         print ("\n")
-        print ("Starting Needle In A Haystack Testing")
+        print ("Starting Needle In A Haystack Testing...")
         print (f"- Model: {self.model_name}")
         print (f"- Context Lengths: {len(self.context_lengths)}, Min: {min(self.context_lengths)}, Max: {max(self.context_lengths)}")
         print (f"- Document Depths: {len(self.document_depth_percents)}, Min: {min(self.document_depth_percents)}%, Max: {max(self.document_depth_percents)}%")
@@ -460,6 +460,6 @@ class LLMNeedleHaystackTester:
 
 if __name__ == "__main__":
     # Tons of defaults set, check out the LLMNeedleHaystackTester's init for more info
-    ht = LLMNeedleHaystackTester(document_depth_percent_interval_type='sigmoid', model_provider='Anthropic', model_name='claude-2.1')
+    ht = LLMNeedleHaystackTester()
 
     ht.start_test()
