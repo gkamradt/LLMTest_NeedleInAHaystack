@@ -61,4 +61,4 @@ Other Parameters:
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. Use of this software requires attribution to the original author and project, as detailed in the license.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE.txt) file for details. Use of this software requires attribution to the original author and project, as detailed in the license.
