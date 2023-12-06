@@ -23,7 +23,7 @@ class LLMNeedleHaystackTester:
     def __init__(self,
                  needle="\nThe best thing to do in San Francisco is eat a sandwich and sit in Dolores Park on a sunny day.\n",
                  haystack_dir="PaulGrahamEssays",
-                 retrieval_question="What is the most fun thing to do in San Francisco?",
+                 retrieval_question="What is the best thing to do in San Francisco?",
                  results_version = 1,
                  context_lengths_min = 1000,
                  context_lengths_max = 200000,
@@ -168,18 +168,9 @@ class LLMNeedleHaystackTester:
 
     def generate_prompt(self, context):
         if self.model_provider == "Anthropic":
-            return f"""Human: You are a close-reading bot with a great memory who answers questions for users. I'm going to give you the text of some essays. Amidst these essays ("the haystack") I've inserted a sentence ("the needle") that contains an answer to the user's question. Here's the question:
-                <question>{self.retrieval_question}</question>
-                Here's the text of the essays. The answer appears in it somewhere.
-                <haystack>
-                {context}
-                </haystack>
-                Now that you've read the context, please answer the user's question, repeated one more time for ease of reference:
-                <question>{self.retrieval_question}</question>
-
-                To do so, first find the sentence from the haystack that contains the answer (there is such a sentence, I promise!) and put it inside <most_relevant_sentence> XML tags. Then, put your answer in <answer> tags. Base your answer strictly on the context, without reference to outside information. Thank you.
-
-                Assistant:"""
+            with open('Anthropic_prompt.txt', 'r') as file:
+                prompt = file.read()
+            return prompt.format(retrieval_question=self.retrieval_question, context=context)
         elif self.model_provider == "OpenAI":
             # Generate the prompt for the Anthropic model
             # Replace the following line with the appropriate prompt structure
