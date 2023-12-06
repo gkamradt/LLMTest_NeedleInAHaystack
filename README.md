@@ -58,3 +58,7 @@ Other Parameters:
 
 ## Anthropic's Claude 2.1 (Run 11/21/2023)
 <img src="img/Claude_2_1_testing.png" alt="GPT-4-128 Context Testing" width="800"/>
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. Use of this software requires attribution to the original author and project, as detailed in the license.
