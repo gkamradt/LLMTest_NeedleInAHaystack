@@ -6,10 +6,24 @@ A simple 'needle in a haystack' analysis to test in-context retrieval ability of
 
 Get the behind the scenes on the [overview video](https://youtu.be/KwRRuiCCdmc).
 
-![GPT-4-128 Context Testing](img/NeedleHaystackCodeSnippet.png)
 
 ```
-git clone https://github.com/gkamradt/LLMTest_NeedleInAHaystack.git
+$ git clone https://github.com/prabha-git/LLMTest_NeedleInAHaystack.git
+$ cd LLMTest_NeedleInAHaystack
+$ python -m venv venv
+$ pip install -r requirements.txt 
+$ export OPENAI_API_KEY=<<openai_key>>
+$ Python
+
+>>> from OpenAIEvaluator import OpenAIEvaluator
+>>> openai_ht = OpenAIEvaluator(model_name='gpt-4-1106-preview', evaluation_method='gpt4')
+>>> openai_ht.start_test()
+
+Starting Needle In A Haystack Testing...
+- Model: gpt-4-1106-preview
+- Context Lengths: 35, Min: 1000, Max: 200000 
+- Document Depths: 35, Min: 0%, Max: 100%
+- Needle: The best thing to do in San Francisco is eat a sandwich and sit in Dolores Park on a sunny day.
 ```
 
 ## The Test
@@ -35,7 +49,6 @@ The key parameters:
 * `document_depth_percent_max` - The ending point of your document depths. Should be int < 100
 * `document_depth_percent_intervals` - The number of iterations to do between your min/max points
 * `document_depth_percent_interval_type` - Determines the distribution of depths to iterate over. 'linear' or 'sigmoid
-* `model_provider` - 'OpenAI' or 'Anthropic'
 * `model_name` - The name of the model you'd like to test. Should match the exact value which needs to be passed to the api. Ex: `gpt-4-1106-preview`
 * `save_results` - Whether or not you'd like to save your results to file. They will be temporarily saved in the object regardless. True/False
 * `save_contexts` - Whether or not you'd like to save your contexts to file. **Warning** these will get very long. True/False
@@ -49,6 +62,7 @@ Other Parameters:
 * `final_context_length_buffer` - The amount of context to take off each input to account for system messages and output tokens. This can be more intelligent but using a static value for now. Default 200 tokens.
 * `seconds_to_sleep_between_completions` - Default: None, set # of seconds if you'd like to slow down your requests
 * `print_ongoing_status` - Default: True, whether or not to print the status of test as they complete
+* `evaluation_method` - Choose between gpt4 and simple substring matching to evaluate, default is gpt4
 
 ## Results Visualization
 `LLMNeedleInHaystackVisualization.ipynb` holds the code to make the pivot table visualization. The pivot table was then transferred to Google Slides for custom annotations and formatting. See the [google slides version](https://docs.google.com/presentation/d/15JEdEBjm32qBbqeYM6DK6G-3mUJd7FAJu-qEzj8IYLQ/edit?usp=sharing). See an overview of how this viz was created [here](https://twitter.com/GregKamradt/status/1729573848893579488).
