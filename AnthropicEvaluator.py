@@ -26,13 +26,14 @@ class AnthropicEvaluator(LLMNeedleHaystackTester):
         else:
             self.openai_api_key= kwargs.get('openai_api_key', os.getenv('OPENAI_API_KEY'))
 
-        self.anthropic_api_key = kwargs.get('anthropic_api_key', os.getenv('ANTHROPIC_API_KEY'))
+        self.anthropic_api_key = kwargs.pop('anthropic_api_key', os.getenv('ANTHROPIC_API_KEY'))
         self.model_name = kwargs['model_name']
+        self.model_to_test_description = kwargs.po('model_name')
         self.model_to_test = AsyncAnthropic(api_key=self.anthropic_api_key)
         self.tokenizer = Anthropic().get_tokenizer()
-        self.model_to_test_description = kwargs['model_name']
 
-        super().__init__()
+
+        super().__init__(**kwargs)
 
     def get_encoding(self,context):
         return self.tokenizer.encode(context)
@@ -45,11 +46,20 @@ class AnthropicEvaluator(LLMNeedleHaystackTester):
             prompt = file.read()
         return prompt.format(retrieval_question=self.retrieval_question, context=context)
 
+    async def get_response_from_model(self, prompt):
+        response = await self.model_to_test.completions.create(
+            model=self.model_name,
+            messages=prompt,
+            max_tokens=300,
+            temperature=0
+        )
+        return response.completion
+
 
 
 if __name__ == "__main__":
     # Tons of defaults set, check out the LLMNeedleHaystackTester's init for more info
-    ht = AnthropicEvaluator(model_name='gpt-4-1106-preview', evaluation_method='gpt4')
+    ht = AnthropicEvaluator(model_name='claude-2.1', evaluation_method='gpt4')
 
     ht.start_test()
 
