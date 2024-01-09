@@ -6,7 +6,6 @@ from anthropic import AsyncAnthropic, Anthropic
 
 class AnthropicEvaluator(LLMNeedleHaystackTester):
     def __init__(self,**kwargs):
-        kwargs['model_provider'] = "Anthropic"
         if 'anthropic_api_key' not in  kwargs and not os.getenv('ANTHROPIC_API_KEY'):
             raise ValueError("Either anthropic_api_key must be supplied with init, or ANTHROPIC_API_KEY must be in env")
 
@@ -28,7 +27,7 @@ class AnthropicEvaluator(LLMNeedleHaystackTester):
 
         self.anthropic_api_key = kwargs.pop('anthropic_api_key', os.getenv('ANTHROPIC_API_KEY'))
         self.model_name = kwargs['model_name']
-        self.model_to_test_description = kwargs.po('model_name')
+        self.model_to_test_description = kwargs.pop('model_name')
         self.model_to_test = AsyncAnthropic(api_key=self.anthropic_api_key)
         self.tokenizer = Anthropic().get_tokenizer()
 
@@ -36,7 +35,7 @@ class AnthropicEvaluator(LLMNeedleHaystackTester):
         super().__init__(**kwargs)
 
     def get_encoding(self,context):
-        return self.tokenizer.encode(context)
+        return self.tokenizer.encode(context).ids
 
     def get_decoding(self, encoded_context):
         return self.tokenizer.decode(encoded_context)
@@ -49,8 +48,8 @@ class AnthropicEvaluator(LLMNeedleHaystackTester):
     async def get_response_from_model(self, prompt):
         response = await self.model_to_test.completions.create(
             model=self.model_name,
-            messages=prompt,
-            max_tokens=300,
+            prompt=prompt,
+            max_tokens_to_sample=300,
             temperature=0
         )
         return response.completion
