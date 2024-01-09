@@ -62,7 +62,24 @@ Other Parameters:
 * `final_context_length_buffer` - The amount of context to take off each input to account for system messages and output tokens. This can be more intelligent but using a static value for now. Default 200 tokens.
 * `seconds_to_sleep_between_completions` - Default: None, set # of seconds if you'd like to slow down your requests
 * `print_ongoing_status` - Default: True, whether or not to print the status of test as they complete
-* `evaluation_method` - Choose between gpt4 and simple substring matching to evaluate, default is gpt4
+* `evaluation_method` - Default: gpt4 Choose between gpt4 and simple substring matching (substring_match) to evaluate
+* `substr_validation_words` - Default: ['dolores', 'sandwich'] If you choose substring evaluation of LLM response, presence of these list of keywords are verified to determine if the LLM respone is correct or not
+
+
+
+#### Note on Evaluation Method (`evaluation_method`):
+
+There are two options for evaluation: `gpt4` and `substring_method`.
+
+- `gpt4`: This is the default, utilizing the GPT-4 model to assess responses with a scoring range from 1 to 10. This method is particularly effective when dealing with a broad topic (Large Needle), where using a few hardcoded keywords to evaluate the accuracy and relevance of the response may not be sufficient.
+```
+    - Score 1: The response is completely unrelated to the reference.
+    - Score 3: The response has some relevance but does not fully align with the reference.
+    - Score 5: The response is moderately relevant but includes inaccuracies.
+    - Score 7: The response aligns well with the reference but has minor omissions.
+    - Score 10: The response is entirely accurate and aligns perfectly with the reference.
+```
+- `substring_method`: This approach is suitable for "small needles", where a predefined list of keywords can effectively determine if the response retrieves the essential information. It provides a binary score of either 0 or 1. Opting for this method can also reduce GPT-4 API evaluation costs.
 
 ## Results Visualization
 `LLMNeedleInHaystackVisualization.ipynb` holds the code to make the pivot table visualization. The pivot table was then transferred to Google Slides for custom annotations and formatting. See the [google slides version](https://docs.google.com/presentation/d/15JEdEBjm32qBbqeYM6DK6G-3mUJd7FAJu-qEzj8IYLQ/edit?usp=sharing). See an overview of how this viz was created [here](https://twitter.com/GregKamradt/status/1729573848893579488).

@@ -26,6 +26,7 @@ class LLMNeedleHaystackTester(ABC):
                  needle="\nThe best thing to do in San Francisco is eat a sandwich and sit in Dolores Park on a sunny day.\n",
                  haystack_dir="PaulGrahamEssays",
                  retrieval_question="What is the best thing to do in San Francisco?",
+                 substr_validation_words=['dolores', 'sandwich'],
                  results_version=1,
                  context_lengths_min=1000,
                  context_lengths_max=200000,
@@ -47,6 +48,7 @@ class LLMNeedleHaystackTester(ABC):
         :param needle: The needle to be found in the haystack. Default is None.
         :param haystack_dir: The directory of text files to use as background context (or a haystack) in which the needle is to be found. Default is Paul Graham Essays.
         :param retrieval_question: The question which with to prompt the model to do the retrieval.
+        :param substr_validation_words: If you choose substring evaluation of LLM response, presence of these list of keywords are verified to determine if the LLM respone is correct or not
         :param results_version: In case you would like to try the same combination of model, context length, and depth % multiple times, change the results version other than 1
         :param num_concurrent_requests: Due to volume, this object is set up to run concurrent requests, default = 1. Be careful of rate limits.
         :param save_results: Whether or not you would like to save your contexts to file. Warning: These will get long! Default = True
@@ -65,12 +67,10 @@ class LLMNeedleHaystackTester(ABC):
         :param print_ongoing_status: Whether or not to print the ongoing status. Default is True.
         :param evaluation_method: Choose between gpt to evaluate (get the score 1,3,5,7,10) else using simple substring matching , default is gpt4
         """
-        if not needle or not haystack_dir or not retrieval_question:
-            raise ValueError("Needle, haystack, and retrieval_question must be provided.")
-
         self.needle = needle
         self.haystack_dir = haystack_dir
         self.retrieval_question = retrieval_question
+        self.substr_validation_words = substr_validation_words
         self.results_version = results_version
         self.num_concurrent_requests = num_concurrent_requests
         self.save_results = save_results
@@ -329,7 +329,8 @@ class LLMNeedleHaystackTester(ABC):
         return int(eval_result['score'])
 
     def evaluate_response_substring_match(self, response):
-        if 'sandwich' in response.lower() and 'dolores' in response.lower():
+        response_lower = response.lower()
+        if all(word in response_lower for word in self.substr_validation_words):
             return 1
         else:
             return 0
