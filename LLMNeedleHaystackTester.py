@@ -114,6 +114,12 @@ class LLMNeedleHaystackTester(ABC):
 
         self.evaluation_model = ChatOpenAI(model="gpt-4", temperature=0, openai_api_key=self.openai_api_key)
 
+        if evaluation_method == 'substring_match' and not all(
+                word.lower() in needle.lower() for word in substr_validation_words):
+            raise ValueError("You choose substring evaluation method but some of the words in substr_validation_words is not in the needle you provided"
+                             f"\n\nneedle: {needle}"
+                             f"\nsubstr_validation_words: {substr_validation_words}")
+
     def logistic(self, x, L=100, x0=50, k=.1):
         if x == 0:
             return 0
