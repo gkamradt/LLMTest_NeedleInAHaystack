@@ -112,7 +112,9 @@ class LLMNeedleHaystackTester(ABC):
             raise ValueError(
                 "document_depth_percent_interval_type must be either None, 'linear' or 'sigmoid'. If you'd like your own distribution give a list of ints in via document_depth_percent_intervals")
 
-        self.evaluation_model = ChatOpenAI(model="gpt-4", temperature=0, openai_api_key=self.openai_api_key)
+
+        if evaluation_method == 'gpt4':
+            self.evaluation_model = ChatOpenAI(model="gpt-4", temperature=0,openai_api_key=self.openai_api_key)
 
         if evaluation_method == 'substring_match' and not all(
                 word.lower() in needle.lower() for word in substr_validation_words):
