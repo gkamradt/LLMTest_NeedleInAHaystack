@@ -1,29 +1,26 @@
-from dotenv import load_dotenv
-import os
-import tiktoken
+import asyncio
 import glob
 import json
-from langchain.evaluation import load_evaluator
-from langchain.chat_models import ChatOpenAI
-from anthropic import AsyncAnthropic, Anthropic
-from dotenv import load_dotenv
 import numpy as np
-from openai import AsyncOpenAI
-import asyncio
-from asyncio import Semaphore
-from datetime import datetime, timezone
+import os
 import time
 
-load_dotenv()
+from .evaluators import Evaluator
+from .models import ModelTester
+
+from asyncio import Semaphore
+from datetime import datetime, timezone
 
 class LLMNeedleHaystackTester:
     """
     This class is used to test the LLM Needle Haystack.
     """
     def __init__(self,
-                 needle="\nThe best thing to do in San Francisco is eat a sandwich and sit in Dolores Park on a sunny day.\n",
-                 haystack_dir="PaulGrahamEssays",
-                 retrieval_question="What is the best thing to do in San Francisco?",
+                 model_to_test: ModelTester = None,
+                 evaluator: Evaluator = None,
+                 needle = None,
+                 haystack_dir = "PaulGrahamEssays",
+                 retrieval_question = None,
                  results_version = 1,
                  context_lengths_min = 1000,
                  context_lengths_max = 200000,
@@ -34,17 +31,15 @@ class LLMNeedleHaystackTester:
                  document_depth_percent_intervals = 35,
                  document_depth_percents = None,
                  document_depth_percent_interval_type = "linear",
-                 model_provider = "OpenAI",
-                 openai_api_key=None,
-                 anthropic_api_key = None,
-                 model_name='gpt-4-1106-preview',
                  num_concurrent_requests = 1,
                  save_results = True,
                  save_contexts = True,
                  final_context_length_buffer = 200,
                  seconds_to_sleep_between_completions = None,
                  print_ongoing_status = True):
-        """        
+        """
+        :model_to_test: The model to test. Default is None.
+        :evaluator: An evaluator to evaluate the model's response. Default is None.
         :param needle: The needle to be found in the haystack. Default is None.
         :param haystack_dir: The directory of text files to use as background context (or a haystack) in which the needle is to be found. Default is Paul Graham Essays.
         :param retrieval_question: The question which with to prompt the model to do the retrieval.
@@ -62,16 +57,16 @@ class LLMNeedleHaystackTester:
         :param document_depth_percent_intervals: The number of intervals for the document depth percent. Default is 35.
         :param document_depth_percents: The depth percentages of the document. Default is None.
         :param document_depth_percent_interval_type: The type of interval for the document depth percent. Must be either 'linear' or 'sigmoid'. Default is 'linear'.
-        :param model_provider: The provider of the model. Must be either 'OpenAI' or 'Anthropic'. Default is 'OpenAI'.
-        :param openai_api_key: The API key for OpenAI. Default is None.
-        :param anthropic_api_key: The API key for Anthropic. Default is None.
-        :param model_name: The name of the model. Default is 'gpt-4-1106-preview'.
+        :param evaluator_model_name: Model name for evaluator, only OpenAI models are supported. Default is 'gpt-4'.
+        :param evaluator_openai_api_key: The API key for OpenAI to use for the evaluator. Default is None.
         :param seconds_to_sleep_between_completions: The number of seconds to sleep between completions. Default is None.
         :param print_ongoing_status: Whether or not to print the ongoing status. Default is True.
         """
+        if not model_to_test:
+            raise ValueError("A language model must be provided to test.")
         if not needle or not haystack_dir or not retrieval_question:
             raise ValueError("Needle, haystack, and retrieval_question must be provided.")
-        
+
         self.needle = needle
         self.haystack_dir = haystack_dir
         self.retrieval_question = retrieval_question
@@ -82,7 +77,6 @@ class LLMNeedleHaystackTester:
         self.save_contexts = save_contexts
         self.seconds_to_sleep_between_completions = seconds_to_sleep_between_completions
         self.print_ongoing_status = print_ongoing_status
-        self.model_provider = model_provider
         self.testing_results = []
 
         if context_lengths is None:
@@ -92,6 +86,9 @@ class LLMNeedleHaystackTester:
                 self.context_lengths = np.round(np.linspace(context_lengths_min, context_lengths_max, num=context_lengths_num_intervals, endpoint=True)).astype(int)
         else:
             self.context_lengths = context_lengths
+
+        if document_depth_percent_interval_type not in [None, "linear", "sigmoid"]:
+            raise ValueError("document_depth_percent_interval_type must be either None, 'linear' or 'sigmoid'. If you'd like your own distribution give a list of ints in via document_depth_percent_intervals")
 
         if document_depth_percents is None:
             if document_depth_percent_min is None or document_depth_percent_max is None or document_depth_percent_intervals is None:
@@ -103,51 +100,20 @@ class LLMNeedleHaystackTester:
                     self.document_depth_percents = [self.logistic(x) for x in np.linspace(document_depth_percent_min, document_depth_percent_max, document_depth_percent_intervals)]
         else:
             self.document_depth_percents = document_depth_percents
-
-        if document_depth_percent_interval_type not in [None, "linear", "sigmoid"]:
-            raise ValueError("document_depth_percent_interval_type must be either None, 'linear' or 'sigmoid'. If you'd like your own distribution give a list of ints in via document_depth_percent_intervals")
         
-        if model_provider not in ["OpenAI", "Anthropic"]:
-            raise ValueError("model_provider must be either 'OpenAI' or 'Anthropic'")
+        self.model_to_test = model_to_test
+        self.model_name = self.model_to_test.model_name
         
-        if model_provider == "Anthropic" and "claude" not in model_name:
-            raise ValueError("If the model provider is 'Anthropic', the model name must include 'claude'. See https://docs.anthropic.com/claude/reference/selecting-a-model for more details on Anthropic models")
-        
-        self.openai_api_key = openai_api_key or os.getenv('OPENAI_API_KEY')
-        self.model_name = model_name
-
-        if not self.openai_api_key and not os.getenv('OPENAI_API_KEY'):
-            raise ValueError("Either openai_api_key must be supplied with init, or OPENAI_API_KEY must be in env. Used for evaluation model")
-        else:
-            self.openai_api_key = openai_api_key or os.getenv('OPENAI_API_KEY')
-        
-        self.anthropic_api_key = anthropic_api_key or os.getenv('ANTHROPIC_API_KEY')
-
-        if self.model_provider == "Anthropic":
-            if not self.anthropic_api_key and not os.getenv('ANTHROPIC_API_KEY'):
-                raise ValueError("Either anthropic_api_key must be supplied with init, or ANTHROPIC_API_KEY must be in env.")
-            else:
-                self.anthropic_api_key = anthropic_api_key or os.getenv('ANTHROPIC_API_KEY')
-            
-        if not self.model_name:
-            raise ValueError("model_name must be provided.")
-        
-        if model_provider == "OpenAI":
-            self.model_to_test = AsyncOpenAI(api_key=self.openai_api_key)
-            self.enc = tiktoken.encoding_for_model(self.model_name)
-        elif model_provider == "Anthropic":
-            self.model_to_test = AsyncAnthropic(api_key=self.anthropic_api_key)
-            self.enc = Anthropic().get_tokenizer()
-        
-        self.model_to_test_description = model_name
-        self.evaluation_model = ChatOpenAI(model="gpt-4", temperature=0, openai_api_key = self.openai_api_key)
+        self.evaluation_model = evaluator
 
     def logistic(self, x, L=100, x0=50, k=.1):
-        if x == 0:
-            return 0
-        if x == 100:
-            return 100
-        return np.round(L / (1 + np.exp(-k * (x - x0))), 3)
+        if x in [0, 100]:
+            return x
+        x = -k * (x - x0)
+        return np.round(L * self.sigmoid(x), 3)
+    
+    def sigmoid(self, x):
+        return 1 / (1 + np.exp(-x))
     
     async def bound_evaluate_and_log(self, sem, *args):
         async with sem:
@@ -166,29 +132,6 @@ class LLMNeedleHaystackTester:
         # Wait for all tasks to complete
         await asyncio.gather(*tasks)
 
-    def generate_prompt(self, context):
-        if self.model_provider == "Anthropic":
-            with open('Anthropic_prompt.txt', 'r') as file:
-                prompt = file.read()
-            return prompt.format(retrieval_question=self.retrieval_question, context=context)
-        elif self.model_provider == "OpenAI":
-            # Generate the prompt for the Anthropic model
-            # Replace the following line with the appropriate prompt structure
-            return [
-                {
-                    "role": "system",
-                    "content": "You are a helpful AI bot that answers questions for a user. Keep your response short and direct"
-                },
-                {
-                    "role": "user",
-                    "content": context
-                },
-                {
-                    "role": "user",
-                    "content": f"{self.retrieval_question} Don't give information outside the document or repeat your findings"
-                }
-            ]
-
     async def evaluate_and_log(self, context_length, depth_percent):
         # Checks to see if you've already checked a length/percent/version.
         # This helps if the program stop running and you want to restart later
@@ -200,38 +143,22 @@ class LLMNeedleHaystackTester:
         context = await self.generate_context(context_length, depth_percent)
 
         # Prepare your message to send to the model you're going to evaluate
-        prompt = self.generate_prompt(context)
+        prompt = self.model_to_test.generate_prompt(context, self.retrieval_question)
 
         test_start_time = time.time()
 
         # Go see if the model can answer the question to pull out your random fact
-        if self.model_provider == "OpenAI":
-            response = await self.model_to_test.chat.completions.create(
-                model=self.model_name,
-                messages=prompt,
-                max_tokens=300,
-                temperature=0
-            )
-            response = response.choices[0].message.content
-        elif self.model_provider == "Anthropic":
-            response = await self.model_to_test.completions.create(
-                model=self.model_name,
-                max_tokens_to_sample=300,
-                prompt=prompt,
-                temperature=0
-            )
-            response = response.completion
+        response = await self.model_to_test.evaluate_model(prompt)
 
         test_end_time = time.time()
         test_elapsed_time = test_end_time - test_start_time
 
         # Compare the reponse to the actual needle you placed
-        score = self.evaluate_response(response)
-
+        score = self.evaluation_model.evaluate_response(response)
 
         results = {
             # 'context' : context, # Uncomment this line if you'd like to save the context the model was asked to retrieve from. Warning: This will become very large.
-            'model' : self.model_to_test_description,
+            'model' : self.model_name,
             'context_length' : int(context_length),
             'depth_percent' : float(depth_percent),
             'version' : self.results_version,
@@ -255,7 +182,7 @@ class LLMNeedleHaystackTester:
         context_file_location = f'{self.model_name.replace(".", "_")}_len_{context_length}_depth_{int(depth_percent*100)}'
 
         if self.save_contexts:
-            results['file_name'] : context_file_location
+            results['file_name'] = context_file_location
 
             # Save the context to file for retesting
             if not os.path.exists('contexts'):
@@ -300,10 +227,10 @@ class LLMNeedleHaystackTester:
     async def generate_context(self, context_length, depth_percent):
         # Load up tiktoken so we navigate tokens more easily
 
-        # Get your Paul Graham files loaded into a string
+        # Get your haystack dir files loaded into a string
         context = self.read_context_files()
 
-        # Truncate the Paul Graham essays to the context length you desire
+        # Truncate the haystack dir essays to the context length you desire
         context = self.encode_and_trim(context, context_length)
 
         # Insert your random statement according to your depth percent
@@ -311,18 +238,9 @@ class LLMNeedleHaystackTester:
 
         return context
     
-    def encode_text_to_tokens(self, text):
-        if self.model_provider == "OpenAI":
-            return self.enc.encode(text)
-        elif self.model_provider == "Anthropic":
-            # Assuming you have a different encoder for Anthropic
-            return self.enc.encode(text).ids
-        else:
-            raise ValueError("model_provider must be either 'OpenAI' or 'Anthropic'")
-    
     def insert_needle(self, context, depth_percent, context_length):
-        tokens_needle = self.encode_text_to_tokens(self.needle)
-        tokens_context = self.encode_text_to_tokens(context)
+        tokens_needle = self.model_to_test.encode_text_to_tokens(self.needle)
+        tokens_context = self.model_to_test.encode_text_to_tokens(context)
 
         # Reducing the context length by 150 buffer. This is to account for system message, the user question, and response.
         context_length -= self.final_context_length_buffer
@@ -342,7 +260,7 @@ class LLMNeedleHaystackTester:
             tokens_new_context = tokens_context[:insertion_point]
 
             # We want to make sure that we place our needle at a sentence break so we first see what token a '.' is
-            period_tokens = self.encode_text_to_tokens('.')
+            period_tokens = self.model_to_test.encode_text_to_tokens('.')
             
             # Then we iteration backwards until we find the first period
             while tokens_new_context and tokens_new_context[-1] not in period_tokens:
@@ -354,49 +272,11 @@ class LLMNeedleHaystackTester:
             tokens_new_context += tokens_needle + tokens_context[insertion_point:]
 
         # Convert back to a string and return it
-        new_context = self.decode_tokens(tokens_new_context)
+        new_context = self.model_to_test.decode_tokens(tokens_new_context)
         return new_context
 
-    def evaluate_response(self, response):
-        accuracy_criteria = {
-            "accuracy": """
-            Score 1: The answer is completely unrelated to the reference.
-            Score 3: The answer has minor relevance but does not align with the reference.
-            Score 5: The answer has moderate relevance but contains inaccuracies.
-            Score 7: The answer aligns with the reference but has minor omissions.
-            Score 10: The answer is completely accurate and aligns perfectly with the reference.
-            Only respond with a numberical score
-            """
-        }
-
-        # Using GPT-4 to evaluate
-        evaluator = load_evaluator(
-            "labeled_score_string",
-            criteria=accuracy_criteria,
-            llm=self.evaluation_model,
-        )
-
-        eval_result = evaluator.evaluate_strings(
-            # The models response
-            prediction=response,
-
-            # The actual answer
-            reference=self.needle,
-
-            # The question asked
-            input=self.retrieval_question,
-        )
-
-        return int(eval_result['score'])
-
     def get_context_length_in_tokens(self, context):
-        if self.model_provider == "OpenAI":
-            return len(self.enc.encode(context))
-        elif self.model_provider == "Anthropic":
-            # Assuming you have a different encoder for Anthropic
-            return len(self.enc.encode(context).ids)
-        else:
-            raise ValueError("model_provider must be either 'OpenAI' or 'Anthropic'")
+        return len(self.model_to_test.encode_text_to_tokens(context))
 
     def read_context_files(self):
         context = ""
@@ -408,28 +288,10 @@ class LLMNeedleHaystackTester:
                     context += f.read()
         return context
 
-    def get_tokens_from_context(self, context):
-        if self.model_provider == "OpenAI":
-            return self.enc.encode(context)
-        elif self.model_provider == "Anthropic":
-            # Assuming you have a different encoder for Anthropic
-            return self.enc.encode(context).ids
-        else:
-            raise ValueError("model_provider must be either 'OpenAI' or 'Anthropic'")
-        
-    def decode_tokens(self, tokens, context_length=None):
-        if self.model_provider == "OpenAI":
-            return self.enc.decode(tokens[:context_length])
-        elif self.model_provider == "Anthropic":
-            # Assuming you have a different decoder for Anthropic
-            return self.enc.decode(tokens[:context_length])
-        else:
-            raise ValueError("model_provider must be either 'OpenAI' or 'Anthropic'")
-
     def encode_and_trim(self, context, context_length):
-        tokens = self.get_tokens_from_context(context)
+        tokens = self.model_to_test.encode_text_to_tokens(context)
         if len(tokens) > context_length:
-            context = self.decode_tokens(tokens, context_length)
+            context = self.model_to_test.decode_tokens(tokens, context_length)
         return context
     
     def get_results(self):
@@ -448,9 +310,3 @@ class LLMNeedleHaystackTester:
         if self.print_ongoing_status:
             self.print_start_test_summary()
         asyncio.run(self.run_test())
-
-if __name__ == "__main__":
-    # Tons of defaults set, check out the LLMNeedleHaystackTester's init for more info
-    ht = LLMNeedleHaystackTester()
-
-    ht.start_test()

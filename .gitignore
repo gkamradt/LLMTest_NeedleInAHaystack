@@ -128,7 +128,7 @@ celerybeat.pid
 .env
 .venv
 env/
-venv/
+needle_in_haystack_venv/
 ENV/
 env.bak/
 venv.bak/
