@@ -41,9 +41,19 @@ class AnthropicEvaluator(LLMNeedleHaystackTester):
         return self.tokenizer.decode(encoded_context)
 
     def get_prompt(self, context):
-        with open('Anthropic_prompt.txt', 'r') as file:
-            prompt = file.read()
+        prompt = """
+        You are a helpful AI bot that answers questions for a user. Keep your response short and direct
+
+        Human: <context>
+        {context}
+        </context>
+
+        {retrieval_question} Don't give information outside the document or repeat your findings
+
+        Assistant: Here is the most relevant sentence in the context:
+        """
         return prompt.format(retrieval_question=self.retrieval_question, context=context)
+
 
     async def get_response_from_model(self, prompt):
         response = await self.model_to_test.completions.create(
