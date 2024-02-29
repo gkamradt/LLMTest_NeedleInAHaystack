@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-import os
+from pathlib import Path
 import glob
 import json
 from langchain.evaluation import load_evaluator
@@ -205,23 +205,25 @@ class LLMNeedleHaystackTester(ABC):
         context_file_location = f'{self.model_name.replace(".", "_")}_len_{context_length}_depth_{int(depth_percent * 100)}'
 
         if self.save_contexts:
-            results['file_name']: context_file_location
+            results['file_name'] = context_file_location
 
             # Save the context to file for retesting
-            if not os.path.exists('contexts'):
-                os.makedirs('contexts')
+            contexts_dir = Path('contexts')
+            contexts_dir.mkdir(parents=True, exist_ok=True)
 
-            with open(f'contexts/{context_file_location}_context.txt', 'w') as f:
-                f.write(context)
+            context_file_path = contexts_dir / f'{context_file_location}_context.txt'
+            context_file_path.write_text(context)
 
         if self.save_results:
-            # Save the context to file for retesting
-            if not os.path.exists('results'):
-                os.makedirs('results')
+            # Ensure the 'results' directory exists
+            results_dir = Path('results')
+            results_dir.mkdir(parents=True, exist_ok=True)
 
-            # Save the result to file for retesting
-            with open(f'results/{context_file_location}_results.json', 'w') as f:
-                json.dump(results, f)
+            # Define the file path for the results file
+            results_file_path = results_dir / f'{context_file_location}_results.json'
+
+            # Serialize the results dictionary to a JSON formatted string and write to the file
+            results_file_path.write_text(json.dumps(results, indent=4))
 
         if self.seconds_to_sleep_between_completions:
             await asyncio.sleep(self.seconds_to_sleep_between_completions)
@@ -231,20 +233,19 @@ class LLMNeedleHaystackTester(ABC):
         Checks to see if a result has already been evaluated or not
         """
 
-        results_dir = 'results/'
-        if not os.path.exists(results_dir):
+        results_dir = Path('results')
+        if not results_dir.exists():
             return False
 
-        for filename in os.listdir(results_dir):
-            if filename.endswith('.json'):
-                with open(os.path.join(results_dir, filename), 'r') as f:
-                    result = json.load(f)
-                    context_length_met = result['context_length'] == context_length
-                    depth_percent_met = result['depth_percent'] == depth_percent
-                    version_met = result.get('version', 1) == self.results_version
-                    model_met = result['model'] == self.model_name
-                    if context_length_met and depth_percent_met and version_met and model_met:
-                        return True
+        for filepath in results_dir.glob('*.json'):
+            with filepath.open('r') as f:
+                result = json.load(f)
+                context_length_met = result['context_length'] == context_length
+                depth_percent_met = result['depth_percent'] == depth_percent
+                version_met = result.get('version', 1) == self.results_version
+                model_met = result['model'] == self.model_name
+                if context_length_met and depth_percent_met and version_met and model_met:
+                    return True
         return False
 
     async def generate_context(self, context_length, depth_percent):
