@@ -67,5 +67,4 @@ class OpenAIEvaluator(LLMNeedleHaystackTester):
 if __name__ == "__main__":
     # Tons of defaults set, check out the LLMNeedleHaystackTester's init for more info
     ht = OpenAIEvaluator(model_name='gpt-4-1106-preview', evaluation_method='gpt4')
-
     ht.start_test()
