@@ -223,7 +223,7 @@ class LLMNeedleHaystackTester(ABC):
             results_file_path = results_dir / f'{context_file_location}_results.json'
 
             # Serialize the results dictionary to a JSON formatted string and write to the file
-            results_file_path.write_text(json.dumps(results, indent=4))
+            results_file_path.write_text(json.dumps(results))
 
         if self.seconds_to_sleep_between_completions:
             await asyncio.sleep(self.seconds_to_sleep_between_completions)
