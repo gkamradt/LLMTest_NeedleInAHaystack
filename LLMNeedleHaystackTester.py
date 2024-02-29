@@ -22,28 +22,30 @@ class LLMNeedleHaystackTester(ABC):
     This class is used to test the LLM Needle Haystack.
     """
 
-    def __init__(self,
-                 needle="\nThe best thing to do in San Francisco is eat a sandwich and sit in Dolores Park on a sunny day.\n",
-                 haystack_dir="PaulGrahamEssays",
-                 retrieval_question="What is the best thing to do in San Francisco?",
-                 substr_validation_words=['dolores', 'sandwich'],
-                 results_version=1,
-                 context_lengths_min=1000,
-                 context_lengths_max=200000,
-                 context_lengths_num_intervals=35,
-                 context_lengths=None,
-                 document_depth_percent_min=0,
-                 document_depth_percent_max=100,
-                 document_depth_percent_intervals=35,
-                 document_depth_percents=None,
-                 document_depth_percent_interval_type="linear",
-                 num_concurrent_requests=1,
-                 save_results=True,
-                 save_contexts=True,
-                 final_context_length_buffer=200,
-                 seconds_to_sleep_between_completions=None,
-                 print_ongoing_status=True,
-                 evaluation_method='gpt4'):
+    def __init__(
+        self,
+        needle="\nThe best thing to do in San Francisco is eat a sandwich and sit in Dolores Park on a sunny day.\n",
+        haystack_dir="PaulGrahamEssays",
+        retrieval_question="What is the best thing to do in San Francisco?",
+        substr_validation_words=["dolores", "sandwich"],
+        results_version=1,
+        context_lengths_min=1000,
+        context_lengths_max=200000,
+        context_lengths_num_intervals=35,
+        context_lengths=None,
+        document_depth_percent_min=0,
+        document_depth_percent_max=100,
+        document_depth_percent_intervals=35,
+        document_depth_percents=None,
+        document_depth_percent_interval_type="linear",
+        num_concurrent_requests=1,
+        save_results=True,
+        save_contexts=True,
+        final_context_length_buffer=200,
+        seconds_to_sleep_between_completions=None,
+        print_ongoing_status=True,
+        evaluation_method="gpt4",
+    ):
         """
         :param needle: The needle to be found in the haystack. Default is None.
         :param haystack_dir: The directory of text files to use as background context (or a haystack) in which the needle is to be found. Default is Paul Graham Essays.
@@ -82,47 +84,77 @@ class LLMNeedleHaystackTester(ABC):
         self.evaluation_method = evaluation_method
 
         if context_lengths is None:
-            if context_lengths_min is None or context_lengths_max is None or context_lengths_num_intervals is None:
+            if (
+                context_lengths_min is None
+                or context_lengths_max is None
+                or context_lengths_num_intervals is None
+            ):
                 raise ValueError(
-                    "Either context_lengths_min, context_lengths_max, context_lengths_intervals need to be filled out OR the context_lengths_list needs to be supplied.")
+                    "Either context_lengths_min, context_lengths_max, context_lengths_intervals need to be filled out OR the context_lengths_list needs to be supplied."
+                )
             else:
                 self.context_lengths = np.round(
-                    np.linspace(context_lengths_min, context_lengths_max, num=context_lengths_num_intervals,
-                                endpoint=True)).astype(int)
+                    np.linspace(
+                        context_lengths_min,
+                        context_lengths_max,
+                        num=context_lengths_num_intervals,
+                        endpoint=True,
+                    )
+                ).astype(int)
         else:
             self.context_lengths = context_lengths
 
         if document_depth_percents is None:
-            if document_depth_percent_min is None or document_depth_percent_max is None or document_depth_percent_intervals is None:
+            if (
+                document_depth_percent_min is None
+                or document_depth_percent_max is None
+                or document_depth_percent_intervals is None
+            ):
                 raise ValueError(
-                    "Either document_depth_percent_min, document_depth_percent_max, document_depth_percent_intervals need to be filled out OR the document_depth_percents needs to be supplied.")
+                    "Either document_depth_percent_min, document_depth_percent_max, document_depth_percent_intervals need to be filled out OR the document_depth_percents needs to be supplied."
+                )
             else:
-                if document_depth_percent_interval_type == 'linear':
+                if document_depth_percent_interval_type == "linear":
                     self.document_depth_percents = np.round(
-                        np.linspace(document_depth_percent_min, document_depth_percent_max,
-                                    num=document_depth_percent_intervals, endpoint=True)).astype(int)
-                elif document_depth_percent_interval_type == 'sigmoid':
-                    self.document_depth_percents = [self.logistic(x) for x in
-                                                    np.linspace(document_depth_percent_min, document_depth_percent_max,
-                                                                document_depth_percent_intervals)]
+                        np.linspace(
+                            document_depth_percent_min,
+                            document_depth_percent_max,
+                            num=document_depth_percent_intervals,
+                            endpoint=True,
+                        )
+                    ).astype(int)
+                elif document_depth_percent_interval_type == "sigmoid":
+                    self.document_depth_percents = [
+                        self.logistic(x)
+                        for x in np.linspace(
+                            document_depth_percent_min,
+                            document_depth_percent_max,
+                            document_depth_percent_intervals,
+                        )
+                    ]
         else:
             self.document_depth_percents = document_depth_percents
 
         if document_depth_percent_interval_type not in [None, "linear", "sigmoid"]:
             raise ValueError(
-                "document_depth_percent_interval_type must be either None, 'linear' or 'sigmoid'. If you'd like your own distribution give a list of ints in via document_depth_percent_intervals")
+                "document_depth_percent_interval_type must be either None, 'linear' or 'sigmoid'. If you'd like your own distribution give a list of ints in via document_depth_percent_intervals"
+            )
 
+        if evaluation_method == "gpt4":
+            self.evaluation_model = ChatOpenAI(
+                model="gpt-4", temperature=0, openai_api_key=self.openai_api_key
+            )
 
-        if evaluation_method == 'gpt4':
-            self.evaluation_model = ChatOpenAI(model="gpt-4", temperature=0,openai_api_key=self.openai_api_key)
+        if evaluation_method == "substring_match" and not all(
+            word.lower() in needle.lower() for word in substr_validation_words
+        ):
+            raise ValueError(
+                "You choose substring evaluation method but some of the words in substr_validation_words is not in the needle you provided"
+                f"\n\nneedle: {needle}"
+                f"\nsubstr_validation_words: {substr_validation_words}"
+            )
 
-        if evaluation_method == 'substring_match' and not all(
-                word.lower() in needle.lower() for word in substr_validation_words):
-            raise ValueError("You choose substring evaluation method but some of the words in substr_validation_words is not in the needle you provided"
-                             f"\n\nneedle: {needle}"
-                             f"\nsubstr_validation_words: {substr_validation_words}")
-
-    def logistic(self, x, L=100, x0=50, k=.1):
+    def logistic(self, x, L=100, x0=50, k=0.1):
         if x == 0:
             return 0
         if x == 100:
@@ -172,7 +204,6 @@ class LLMNeedleHaystackTester(ABC):
         # Go see if the model can answer the question to pull out your random fact
         response = await self.get_response_from_model(prompt)
 
-
         test_end_time = time.time()
         test_elapsed_time = test_end_time - test_start_time
 
@@ -181,15 +212,17 @@ class LLMNeedleHaystackTester(ABC):
 
         results = {
             # 'context' : context, # Uncomment this line if you'd like to save the context the model was asked to retrieve from. Warning: This will become very large.
-            'model': self.model_to_test_description,
-            'context_length': int(context_length),
-            'depth_percent': float(depth_percent),
-            'version': self.results_version,
-            'needle': self.needle,
-            'model_response': response,
-            'score': score,
-            'test_duration_seconds': test_elapsed_time,
-            'test_timestamp_utc': datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S%z')
+            "model": self.model_to_test_description,
+            "context_length": int(context_length),
+            "depth_percent": float(depth_percent),
+            "version": self.results_version,
+            "needle": self.needle,
+            "model_response": response,
+            "score": score,
+            "test_duration_seconds": test_elapsed_time,
+            "test_timestamp_utc": datetime.now(timezone.utc).strftime(
+                "%Y-%m-%d %H:%M:%S%z"
+            ),
         }
 
         self.testing_results.append(results)
@@ -205,22 +238,22 @@ class LLMNeedleHaystackTester(ABC):
         context_file_location = f'{self.model_name.replace(".", "_")}_len_{context_length}_depth_{int(depth_percent * 100)}'
 
         if self.save_contexts:
-            results['file_name'] = context_file_location
+            results["file_name"] = context_file_location
 
             # Save the context to file for retesting
-            contexts_dir = Path('contexts')
+            contexts_dir = Path("contexts")
             contexts_dir.mkdir(parents=True, exist_ok=True)
 
-            context_file_path = contexts_dir / f'{context_file_location}_context.txt'
+            context_file_path = contexts_dir / f"{context_file_location}_context.txt"
             context_file_path.write_text(context)
 
         if self.save_results:
             # Ensure the 'results' directory exists
-            results_dir = Path('results')
+            results_dir = Path("results")
             results_dir.mkdir(parents=True, exist_ok=True)
 
             # Define the file path for the results file
-            results_file_path = results_dir / f'{context_file_location}_results.json'
+            results_file_path = results_dir / f"{context_file_location}_results.json"
 
             # Serialize the results dictionary to a JSON formatted string and write to the file
             results_file_path.write_text(json.dumps(results))
@@ -233,18 +266,23 @@ class LLMNeedleHaystackTester(ABC):
         Checks to see if a result has already been evaluated or not
         """
 
-        results_dir = Path('results')
+        results_dir = Path("results")
         if not results_dir.exists():
             return False
 
-        for filepath in results_dir.glob('*.json'):
-            with filepath.open('r') as f:
+        for filepath in results_dir.glob("*.json"):
+            with filepath.open("r") as f:
                 result = json.load(f)
-                context_length_met = result['context_length'] == context_length
-                depth_percent_met = result['depth_percent'] == depth_percent
-                version_met = result.get('version', 1) == self.results_version
-                model_met = result['model'] == self.model_name
-                if context_length_met and depth_percent_met and version_met and model_met:
+                context_length_met = result["context_length"] == context_length
+                depth_percent_met = result["depth_percent"] == depth_percent
+                version_met = result.get("version", 1) == self.results_version
+                model_met = result["model"] == self.model_name
+                if (
+                    context_length_met
+                    and depth_percent_met
+                    and version_met
+                    and model_met
+                ):
                     return True
         return False
 
@@ -271,7 +309,7 @@ class LLMNeedleHaystackTester(ABC):
 
         # If your context + needle are longer than the context length (which it will be), then reduce tokens from the context by the needle length
         if len(tokens_context) + len(tokens_needle) > context_length:
-            tokens_context = tokens_context[:context_length - len(tokens_needle)]
+            tokens_context = tokens_context[: context_length - len(tokens_needle)]
 
         if depth_percent == 100:
             # If your depth percent is 100 (which means your needle is the last thing in the doc), throw it at the end
@@ -284,7 +322,7 @@ class LLMNeedleHaystackTester(ABC):
             tokens_new_context = tokens_context[:insertion_point]
 
             # We want to make sure that we place our needle at a sentence break so we first see what token a '.' is
-            period_tokens = self.get_encoding('.')
+            period_tokens = self.get_encoding(".")
 
             # Then we iteration backwards until we find the first period
             while tokens_new_context and tokens_new_context[-1] not in period_tokens:
@@ -300,7 +338,7 @@ class LLMNeedleHaystackTester(ABC):
         return new_context
 
     def evaluate_response(self, response):
-        if self.evaluation_method == 'gpt4':
+        if self.evaluation_method == "gpt4":
             return self.evaluate_response_gpt4(response)
         else:
             return self.evaluate_response_substring_match(response)
@@ -327,15 +365,13 @@ class LLMNeedleHaystackTester(ABC):
         eval_result = evaluator.evaluate_strings(
             # The models response
             prediction=response,
-
             # The actual answer
             reference=self.needle,
-
             # The question asked
             input=self.retrieval_question,
         )
 
-        return int(eval_result['score'])
+        return int(eval_result["score"])
 
     def evaluate_response_substring_match(self, response):
         response_lower = response.lower()
@@ -361,7 +397,7 @@ class LLMNeedleHaystackTester(ABC):
 
         while self.get_context_length_in_tokens(context) < max_context_length:
             for file in glob.glob(f"{self.haystack_dir}/*.txt"):
-                with open(file, 'r') as f:
+                with open(file, "r") as f:
                     context += f.read()
         return context
 
@@ -377,9 +413,11 @@ class LLMNeedleHaystackTester(ABC):
         print("Starting Needle In A Haystack Testing...")
         print(f"- Model: {self.model_name}")
         print(
-            f"- Context Lengths: {len(self.context_lengths)}, Min: {min(self.context_lengths)}, Max: {max(self.context_lengths)}")
+            f"- Context Lengths: {len(self.context_lengths)}, Min: {min(self.context_lengths)}, Max: {max(self.context_lengths)}"
+        )
         print(
-            f"- Document Depths: {len(self.document_depth_percents)}, Min: {min(self.document_depth_percents)}%, Max: {max(self.document_depth_percents)}%")
+            f"- Document Depths: {len(self.document_depth_percents)}, Min: {min(self.document_depth_percents)}%, Max: {max(self.document_depth_percents)}%"
+        )
         print(f"- Needle: {self.needle.strip()}")
         print("\n\n")
 
