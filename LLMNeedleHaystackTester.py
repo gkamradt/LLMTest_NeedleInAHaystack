@@ -195,7 +195,7 @@ class LLMNeedleHaystackTester(ABC):
         self.testing_results.append(results)
 
         if self.print_ongoing_status:
-            print(f"-- Test Summary -- ")
+            print("-- Test Summary -- ")
             print(f"Duration: {test_elapsed_time:.1f} seconds")
             print(f"Context: {context_length} tokens")
             print(f"Depth: {depth_percent}%")
