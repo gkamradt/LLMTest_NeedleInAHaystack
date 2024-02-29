@@ -41,34 +41,33 @@ class AnthropicEvaluator(LLMNeedleHaystackTester):
         return self.tokenizer.decode(encoded_context)
 
     def get_prompt(self, context):
-        prompt = """
-        You are a helpful AI bot that answers questions for a user. Keep your response short and direct
-
-        Human: <context>
-        {context}
-        </context>
-
-        {retrieval_question} Don't give information outside the document or repeat your findings
-
-        Assistant: Here is the most relevant sentence in the context:
-        """
-        return prompt.format(retrieval_question=self.retrieval_question, context=context)
+        return [
+            {
+                "role": "user",
+                "content": f"{context}\n\n {self.retrieval_question} Don't give information outside the document or repeat your findings"
+            },
+            {
+                "role": "assistant",
+                "content": "Here is the most relevant sentence in the context:"
+            }
+        ]
 
 
     async def get_response_from_model(self, prompt):
-        response = await self.model_to_test.completions.create(
+        response = await self.model_to_test.messages.create(
             model=self.model_name,
-            prompt=prompt,
-            max_tokens_to_sample=300,
+            messages =prompt,
+            system="You are a helpful AI bot that answers questions for a user. Keep your response short and direct",
+            max_tokens=300,
             temperature=0
         )
-        return response.completion
+        return response.content[0].text
 
 
 
 if __name__ == "__main__":
     # Tons of defaults set, check out the LLMNeedleHaystackTester's init for more info
-    ht = AnthropicEvaluator(model_name='claude-2.1', evaluation_method='gpt4')
+    ht = AnthropicEvaluator(model_name='claude-2.1', evaluation_method='substring_match')
 
     ht.start_test()
 
