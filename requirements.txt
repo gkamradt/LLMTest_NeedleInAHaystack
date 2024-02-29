@@ -27,6 +27,7 @@ mypy-extensions==1.0.0
 numpy==1.26.2
 openai==1.3.5
 packaging==23.2
+pre-commit==3.6.2
 pydantic==2.5.2
 pydantic_core==2.14.5
 python-dotenv==1.0.0
