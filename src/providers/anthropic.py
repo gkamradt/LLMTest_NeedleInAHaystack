@@ -1,11 +1,11 @@
 import os
 
-from .model_tester import ModelTester
+from .model import ModelProvider
 
 from anthropic import AsyncAnthropic, Anthropic
 from typing import Optional
 
-class AnthropicTester(ModelTester):
+class Anthropic(ModelProvider):
     def __init__(self, model_name: str = "claude", api_key: str = None):
         """
         :param model_name: The name of the model. Default is 'claude'.

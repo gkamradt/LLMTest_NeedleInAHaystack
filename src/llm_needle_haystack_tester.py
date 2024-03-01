@@ -6,7 +6,7 @@ import os
 import time
 
 from .evaluators import Evaluator
-from .models import ModelTester
+from .providers import ModelProvider
 
 from asyncio import Semaphore
 from datetime import datetime, timezone
@@ -16,7 +16,7 @@ class LLMNeedleHaystackTester:
     This class is used to test the LLM Needle Haystack.
     """
     def __init__(self,
-                 model_to_test: ModelTester = None,
+                 model_to_test: ModelProvider = None,
                  evaluator: Evaluator = None,
                  needle = None,
                  haystack_dir = "PaulGrahamEssays",
@@ -36,7 +36,8 @@ class LLMNeedleHaystackTester:
                  save_contexts = True,
                  final_context_length_buffer = 200,
                  seconds_to_sleep_between_completions = None,
-                 print_ongoing_status = True):
+                 print_ongoing_status = True,
+                 **kwargs):
         """
         :model_to_test: The model to test. Default is None.
         :evaluator: An evaluator to evaluate the model's response. Default is None.
@@ -57,10 +58,9 @@ class LLMNeedleHaystackTester:
         :param document_depth_percent_intervals: The number of intervals for the document depth percent. Default is 35.
         :param document_depth_percents: The depth percentages of the document. Default is None.
         :param document_depth_percent_interval_type: The type of interval for the document depth percent. Must be either 'linear' or 'sigmoid'. Default is 'linear'.
-        :param evaluator_model_name: Model name for evaluator, only OpenAI models are supported. Default is 'gpt-4'.
-        :param evaluator_openai_api_key: The API key for OpenAI to use for the evaluator. Default is None.
         :param seconds_to_sleep_between_completions: The number of seconds to sleep between completions. Default is None.
         :param print_ongoing_status: Whether or not to print the ongoing status. Default is True.
+        :param kwargs: Additional arguments.
         """
         if not model_to_test:
             raise ValueError("A language model must be provided to test.")
@@ -93,11 +93,13 @@ class LLMNeedleHaystackTester:
         if document_depth_percents is None:
             if document_depth_percent_min is None or document_depth_percent_max is None or document_depth_percent_intervals is None:
                 raise ValueError("Either document_depth_percent_min, document_depth_percent_max, document_depth_percent_intervals need to be filled out OR the document_depth_percents needs to be supplied.")
+            
+            if document_depth_percent_interval_type == 'linear':
+                self.document_depth_percents = np.round(np.linspace(document_depth_percent_min, document_depth_percent_max, num=document_depth_percent_intervals, endpoint=True)).astype(int)
+            elif document_depth_percent_interval_type == 'sigmoid':
+                self.document_depth_percents = [self.logistic(x) for x in np.linspace(document_depth_percent_min, document_depth_percent_max, document_depth_percent_intervals)]
             else:
-                if document_depth_percent_interval_type == 'linear':
-                    self.document_depth_percents = np.round(np.linspace(document_depth_percent_min, document_depth_percent_max, num=document_depth_percent_intervals, endpoint=True)).astype(int)
-                elif document_depth_percent_interval_type == 'sigmoid':
-                    self.document_depth_percents = [self.logistic(x) for x in np.linspace(document_depth_percent_min, document_depth_percent_max, document_depth_percent_intervals)]
+                raise ValueError("document_depth_percent_interval_type must be either 'sigmoid' or 'linear' if document_depth_percents is None.")
         else:
             self.document_depth_percents = document_depth_percents
         

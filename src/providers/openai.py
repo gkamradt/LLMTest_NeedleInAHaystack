@@ -1,12 +1,12 @@
 import os
 import tiktoken
 
-from .model_tester import ModelTester
+from .model import ModelProvider
 
 from openai import AsyncOpenAI
 from typing import Optional
 
-class OpenAITester(ModelTester):
+class OpenAI(ModelProvider):
     def __init__(self, model_name: str = "gpt-4-1106-preview", api_key: str = None):
         """
         :param model_name: The name of the model. Default is 'gpt-4-1106-preview'.

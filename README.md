@@ -13,9 +13,14 @@ Get the behind the scenes on the [overview video](https://youtu.be/KwRRuiCCdmc).
 ```zsh
 $ git clone https://github.com/gkamradt/LLMTest_NeedleInAHaystack.git
 $ make setup
-$ source ./needle_in_haystack_venv/bin/activate
+$ source ./venv/bin/activate
+$ pip install -r requirements.txt
 ```
-You can then run the analysis on OpenAI or Anthropic models with `python3 main.py --provider openai` or `python3 main.py --provider anthropic` respectively
+You can then run the analysis on OpenAI or Anthropic models by running `main.py` with the command line arguments shown below. `LLMNeedleHaystackTester` parameters can also be passed as command line arguments, except `model_to_test` and `evaluator` of course.
+* `provider` - The provider of the model, available options are `openai` and `anthropic`. Defaults to `openai`
+* `evaluator` - The provider for the evaluator model, only `openai` is currently supported. Defaults to `openai`.
+* `api_key` - API key for either OpenAI or Anthropic provider. Can either be passed as a command line argument or an environment variable named `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` depending on the provider. Defaults to `None`.
+* `evaluator_api_key` - API key for OpenAI provider. Can either be passed as a command line argument or an environment variable named `OPENAI_API_KEY`. Defaults to `None`
 
 ## The Test
 1. Place a random fact or statement (the 'needle') in the middle of a long context window (the 'haystack')
@@ -28,30 +33,32 @@ If ran and `save_results = True`, then this script will populate a `result/` dir
 
 I've put the results from the original tests in `/original_results`. I've upgraded the script since those test were ran so the data formats may not match your script results.
 
-The key parameters:
+`LLMNeedleHaystackTester` parameters:
+* `model_to_test` - The model to run the needle in a haystack test on. Default is None.
+* `evaluator` - An evaluator to evaluate the model's response. Default is None.
 * `needle` - The statement or fact which will be placed in your context ('haystack')
 * `haystack_dir` - The directory which contains the text files to load as background context. Only text files are supported
 * `retrieval_question` - The question with which to retrieve your needle in the background context
 * `results_version` - You may want to run your test multiple times for the same combination of length/depth, change the version number if so
+* `num_concurrent_requests` - Default: 1. Set higher if you'd like to run more requests in parallel. Keep in mind rate limits.
+* `save_results` - Whether or not you'd like to save your results to file. They will be temporarily saved in the object regardless. True/False
+* `save_contexts` - Whether or not you'd like to save your contexts to file. **Warning** these will get very long. True/False
+* `final_context_length_buffer` - The amount of context to take off each input to account for system messages and output tokens. This can be more intelligent but using a static value for now. Default 200 tokens.
 * `context_lengths_min` - The starting point of your context lengths list to iterate
 * `context_lengths_max` - The ending point of your context lengths list to iterate
 * `context_lengths_num_intervals` - The number of intervals between your min/max to iterate through
+* `context_lengths` - A custom set of context lengths. This will override the values set for `context_lengths_min`, max, and intervals if set
 * `document_depth_percent_min` - The starting point of your document depths. Should be int > 0
 * `document_depth_percent_max` - The ending point of your document depths. Should be int < 100
 * `document_depth_percent_intervals` - The number of iterations to do between your min/max points
-* `document_depth_percent_interval_type` - Determines the distribution of depths to iterate over. 'linear' or 'sigmoid
-* `model_name` - The name of the model you'd like to test. Should match the exact value which needs to be passed to the api. Ex: `gpt-4-1106-preview`
-* `save_results` - Whether or not you'd like to save your results to file. They will be temporarily saved in the object regardless. True/False
-* `save_contexts` - Whether or not you'd like to save your contexts to file. **Warning** these will get very long. True/False
-
-Other Parameters:
-* `context_lengths` - A custom set of context lengths. This will override the values set for `context_lengths_min`, max, and intervals if set
 * `document_depth_percents` - A custom set of document depths lengths. This will override the values set for `document_depth_percent_min`, max, and intervals if set
-* `api_key` - API key for either OpenAI or Anthropic provider. Can either be passed when creating the object or an environment variable
-* `num_concurrent_requests` - Default: 1. Set higher if you'd like to run more requests in parallel. Keep in mind rate limits.
-* `final_context_length_buffer` - The amount of context to take off each input to account for system messages and output tokens. This can be more intelligent but using a static value for now. Default 200 tokens.
+* `document_depth_percent_interval_type` - Determines the distribution of depths to iterate over. 'linear' or 'sigmoid
 * `seconds_to_sleep_between_completions` - Default: None, set # of seconds if you'd like to slow down your requests
 * `print_ongoing_status` - Default: True, whether or not to print the status of test as they complete
+
+Other Parameters:
+* `api_key` - API key for either OpenAI or Anthropic provider. Can either be passed when creating the object or an environment variable
+* `model_name` - The name of the model you'd like to use. Should match the exact value which needs to be passed to the api. Ex: For OpenAI inference models it would be `gpt-4-1106-preview`, and for evaluator models (which uses LangChain) it would be `gpt4`.
 
 ## Results Visualization
 `LLMNeedleInHaystackVisualization.ipynb` holds the code to make the pivot table visualization. The pivot table was then transferred to Google Slides for custom annotations and formatting. See the [google slides version](https://docs.google.com/presentation/d/15JEdEBjm32qBbqeYM6DK6G-3mUJd7FAJu-qEzj8IYLQ/edit?usp=sharing). See an overview of how this viz was created [here](https://twitter.com/GregKamradt/status/1729573848893579488).

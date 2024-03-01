@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 
-class ModelTester(ABC):
+class ModelProvider(ABC):
     @abstractmethod
     async def evaluate_model(self, prompt: str) -> str: ...
 

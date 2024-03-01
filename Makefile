@@ -1,4 +1,4 @@
-VENV_NAME=needle_in_haystack_venv
+VENV_NAME=venv
 
 setup: create_venv
 	@echo "Activate the venv with: \`source ./$(VENV_NAME)/bin/activate\`" ;\
