@@ -7,9 +7,9 @@ from openai import AsyncOpenAI
 from typing import Optional
 
 class OpenAI(ModelProvider):
-    def __init__(self, model_name: str = "gpt-4-1106-preview", api_key: str = None):
+    def __init__(self, model_name: str = "gpt-3.5-turbo-0125", api_key: str = None):
         """
-        :param model_name: The name of the model. Default is 'gpt-4-1106-preview'.
+        :param model_name: The name of the model. Default is 'gpt-3.5-turbo-0125'.
         :param api_key: The API key for OpenAI. Default is None.
         """
         

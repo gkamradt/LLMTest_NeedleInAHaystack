@@ -20,7 +20,7 @@ class CommandArgs():
     retrieval_question: Optional[str] = "What is the best thing to do in San Francisco?"
     results_version: Optional[int] = 1
     context_lengths_min: Optional[int] = 1000
-    context_lengths_max: Optional[int] = 200000
+    context_lengths_max: Optional[int] = 16000
     context_lengths_num_intervals: Optional[int] = 35
     context_lengths: Optional[list[int]] = None
     document_depth_percent_min: Optional[int] = 0

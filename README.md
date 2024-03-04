@@ -58,7 +58,7 @@ I've put the results from the original tests in `/original_results`. I've upgrad
 
 Other Parameters:
 * `api_key` - API key for either OpenAI or Anthropic provider. Can either be passed when creating the object or an environment variable
-* `model_name` - The name of the model you'd like to use. Should match the exact value which needs to be passed to the api. Ex: For OpenAI inference models it would be `gpt-4-1106-preview`, and for evaluator models (which uses LangChain) it would be `gpt4`.
+* `model_name` - The name of the model you'd like to use. Should match the exact value which needs to be passed to the api. Ex: For OpenAI inference and evaluator models it would be `gpt-3.5-turbo-0125`.
 
 ## Results Visualization
 `LLMNeedleInHaystackVisualization.ipynb` holds the code to make the pivot table visualization. The pivot table was then transferred to Google Slides for custom annotations and formatting. See the [google slides version](https://docs.google.com/presentation/d/15JEdEBjm32qBbqeYM6DK6G-3mUJd7FAJu-qEzj8IYLQ/edit?usp=sharing). See an overview of how this viz was created [here](https://twitter.com/GregKamradt/status/1729573848893579488).

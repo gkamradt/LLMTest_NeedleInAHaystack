@@ -23,7 +23,7 @@ class LLMNeedleHaystackTester:
                  retrieval_question = None,
                  results_version = 1,
                  context_lengths_min = 1000,
-                 context_lengths_max = 200000,
+                 context_lengths_max = 16000,
                  context_lengths_num_intervals = 35,
                  context_lengths = None,
                  document_depth_percent_min = 0,
