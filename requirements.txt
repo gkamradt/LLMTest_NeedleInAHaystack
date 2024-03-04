@@ -16,11 +16,13 @@ httpcore==1.0.2
 httpx==0.25.2
 huggingface-hub==0.19.4
 idna==3.6
+jsonargparse==4.27.5
 jsonpatch==1.33
 jsonpointer==2.4
-langchain==0.0.341
-langchain-core==0.0.6
-langsmith==0.0.67
+langchain==0.1.9
+langchain-community==0.0.24
+langchain-core==0.1.26
+langsmith==0.1.8
 marshmallow==3.20.1
 multidict==6.0.4
 mypy-extensions==1.0.0
