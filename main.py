@@ -13,6 +13,8 @@ load_dotenv()
 class CommandArgs():
     provider: str = "openai"
     evaluator: str = "openai"
+    model_name: Optional[str] = "gpt-3.5-turbo-0125"
+    evaluator_model_name: Optional[str] = "gpt-3.5-turbo-0125"
     api_key: Optional[str] = None
     evaluator_api_key: Optional[str] = None
     needle: Optional[str] = "\nThe best thing to do in San Francisco is eat a sandwich and sit in Dolores Park on a sunny day.\n"
@@ -38,16 +40,17 @@ class CommandArgs():
 def get_model_to_test(args: CommandArgs) -> ModelProvider:
     match args.provider.lower():
         case "openai":
-            return OpenAI(api_key=args.api_key)
+            return OpenAI(model_name=args.model_name, api_key=args.api_key)
         case "anthropic":
-            return Anthropic(api_key=args.api_key)
+            return Anthropic(model_name=args.model_name, api_key=args.api_key)
         case _:
             raise ValueError(f"Invalid provider: {args.provider}")
 
 def get_evaluator(args: CommandArgs) -> Evaluator:
     match args.evaluator.lower():
         case "openai":
-            return OpenAIEvaluator(question_asked=args.retrieval_question,
+            return OpenAIEvaluator(model_name=args.evaluator_model_name,
+                                   question_asked=args.retrieval_question,
                                    true_answer=args.needle,
                                    api_key=args.evaluator_api_key)
         case _:

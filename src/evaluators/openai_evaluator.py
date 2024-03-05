@@ -7,6 +7,7 @@ from langchain.evaluation import load_evaluator
 from langchain_community.chat_models import ChatOpenAI
 
 class OpenAIEvaluator(Evaluator):
+    DEFAULT_MODEL_KWARGS: dict = dict(temperature=0)
     CRITERIA = {"accuracy": """
                 Score 1: The answer is completely unrelated to the reference.
                 Score 3: The answer has minor relevance but does not align with the reference.
@@ -17,11 +18,13 @@ class OpenAIEvaluator(Evaluator):
 
     def __init__(self,
                  model_name: str = "gpt-3.5-turbo-0125",
+                 model_kwargs: dict = DEFAULT_MODEL_KWARGS,
                  api_key: str = None,
                  true_answer: str = None,
-                 question_asked: str = None):
+                 question_asked: str = None,):
         """
         :param model_name: The name of the model.
+        :param model_kwargs: Model configuration. Default is {temperature: 0}
         :param api_key: The API key for OpenAI. Default is None.
         :param true_answer: The true answer to the question asked.
         :param question_asked: The question asked to the model.
@@ -31,6 +34,7 @@ class OpenAIEvaluator(Evaluator):
             raise ValueError("true_answer and question_asked must be supplied with init.")
 
         self.model_name = model_name
+        self.model_kwargs = model_kwargs
         self.true_answer = true_answer
         self.question_asked = question_asked
 
@@ -40,8 +44,8 @@ class OpenAIEvaluator(Evaluator):
         self.api_key = api_key or os.getenv('OPENAI_API_KEY')
 
         self.evaluator = ChatOpenAI(model=self.model_name,
-                                    temperature=0,
-                                    openai_api_key=self.api_key)
+                                    openai_api_key=self.api_key,
+                                    **self.model_kwargs)
 
     def evaluate_response(self, response: str) -> int:
         evaluator = load_evaluator(

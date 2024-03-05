@@ -10,5 +10,9 @@ create_venv:
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 
-destroy: clean
+reset_run:
+	find . -type d -name "results" -exec rm -rf {} +
+	find . -type d -name "contexts" -exec rm -rf {} +
+
+destroy: clean reset_run
 	rm -rf ./$(VENV_NAME)
