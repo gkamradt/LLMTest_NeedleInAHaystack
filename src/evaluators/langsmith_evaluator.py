@@ -11,6 +11,70 @@ from langsmith.client import Client
 from langsmith.evaluation import EvaluationResult, run_evaluator
 from langsmith.schemas import Example, Run
 
+@run_evaluator
+def score_relevance(run: Run, example: Union[Example, None] = None):
+    """
+    A custom evaluator function that grades the language model's response based on its relevance
+    to a reference answer.
+
+    Args:
+        run (Run): The execution run containing the model's response.
+        example (Union[Example, None]): An optional example containing the reference answer.
+
+    Returns:
+        EvaluationResult: The result of the evaluation, containing the relevance score.
+    """
+    
+    print("--LANGSMITH EVAL--")
+    #print("--MODEL: ", model_name)
+    #print("--EVAL SET: ", eval_set)
+    student_answer = run.outputs["output"]
+    reference = example.outputs["answer"]
+
+    # Grade prompt 
+    template = """You are a grader grading a student response relative to a reference. \n 
+            The reference is a list of elements. The grade is the number of correctly returned \n 
+            elements. For example, if the reference has 5 elements and the student returns 3, \n
+            then the grade is 3. 
+            Here is the student answer: \n --- --- --- \n {answer}
+            Here is the reference question: \n --- --- --- \n {reference}"""
+    # Prompt 
+    prompt = PromptTemplate(
+            template=template,
+            input_variables=["answer", "reference"],
+        )
+
+    # Data model
+    class grade(BaseModel):
+        """Grade output"""
+        score: int = Field(description="Score from grader")
+    
+    ## LLM
+    # Use most performant model as grader
+    model = ChatOpenAI(temperature=0, model="gpt-4-0125-preview")
+    
+    # Tool
+    grade_tool_oai = convert_to_openai_tool(grade)
+    
+    # LLM with tool and enforce invocation
+    llm_with_tool = model.bind(
+        tools=[grade_tool_oai],
+        tool_choice={"type": "function", "function": {"name": "grade"}},
+    )
+    
+    # Parser
+    parser_tool = PydanticToolsParser(tools=[grade])
+    
+    chain = (
+            prompt
+            | llm_with_tool 
+            | parser_tool
+        )
+
+    score = chain.invoke({"answer":student_answer,
+                            "reference":reference})
+
+    return EvaluationResult(key="needles_retrieved", score=score[0].score)
 
 class LangSmithEvaluator():
     """
@@ -46,72 +110,6 @@ class LangSmithEvaluator():
             based on their relevance to a given reference answer. This approach allows for quantifying the
             model's accuracy in retrieving and synthesizing information from the provided context.
         """
-
-        @run_evaluator
-        def score_relevance(run: Run, example: Union[Example, None] = None):
-            """
-            A custom evaluator function that grades the language model's response based on its relevance
-            to a reference answer.
-
-            Args:
-                run (Run): The execution run containing the model's response.
-                example (Union[Example, None]): An optional example containing the reference answer.
-
-            Returns:
-                EvaluationResult: The result of the evaluation, containing the relevance score.
-            """
-            
-            print("--LANGSMITH EVAL--")
-            print("--MODEL: ", model_name)
-            print("--EVAL SET: ", eval_set)
-            student_answer = run.outputs["output"]
-            reference = example.outputs["answer"]
-        
-            # Grade prompt 
-            template = """You are a grader grading a student response relative to a reference. \n 
-                    The reference is a list of elements. The grade is the number of correctly returned \n 
-                    elements. For example, if the reference has 5 elements and the student returns 3, \n
-                    then the grade is 3. 
-                    Here is the student answer: \n --- --- --- \n {answer}
-                    Here is the reference question: \n --- --- --- \n {reference}"""
-            # Prompt 
-            prompt = PromptTemplate(
-                    template=template,
-                    input_variables=["answer", "reference"],
-                )
-
-            # Data model
-            class grade(BaseModel):
-                """Grade output"""
-                score: int = Field(description="Score from grader")
-            
-            ## LLM
-            # Use most performant model as grader
-            model = ChatOpenAI(temperature=0, model="gpt-4-0125-preview")
-            
-            # Tool
-            grade_tool_oai = convert_to_openai_tool(grade)
-            
-            # LLM with tool and enforce invocation
-            llm_with_tool = model.bind(
-                tools=[grade_tool_oai],
-                tool_choice={"type": "function", "function": {"name": "grade"}},
-            )
-            
-            # Parser
-            parser_tool = PydanticToolsParser(tools=[grade])
-            
-            chain = (
-                    prompt
-                    | llm_with_tool 
-                    | parser_tool
-                )
-
-            score = chain.invoke({"answer":student_answer,
-                                  "reference":reference})
-
-            return EvaluationResult(key="needles_retrieved", score=score[0].score)
-
         # Config
         evaluation_config = RunEvalConfig(
             custom_evaluators = [score_relevance],
@@ -119,7 +117,7 @@ class LangSmithEvaluator():
 
         client = Client()
         run_id = uuid.uuid4().hex[:4]
-        project_name = "multi-needle-eval"
+        project_name = eval_set
         client.run_on_dataset(
             dataset_name=eval_set,
             llm_or_chain_factory=chain,

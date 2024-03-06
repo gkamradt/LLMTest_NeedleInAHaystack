@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Optional
 
 from dotenv import load_dotenv
 from jsonargparse import CLI
@@ -40,7 +40,7 @@ class CommandArgs():
     eval_set: Optional[str] = "multi-needle-eval-sf"
     # Multi-needle parameters
     multi_needle: Optional[bool] = False
-    needles: List[str] = field(default_factory=lambda: [
+    needles: list[str] = field(default_factory=lambda: [
         "The top ranked thing to do in San Francisco is go to Dolores Park.",
         "The second rated thing to do in San Francisco is eat at Tony's Pizza Napoletana.",
         "The third best thing to do in San Francisco is visit Alcatraz.",
