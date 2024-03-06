@@ -40,8 +40,7 @@ class OpenAI(ModelProvider):
         self.model_name = model_name
         self.api_key = api_key or os.getenv('OPENAI_API_KEY')
         self.model = AsyncOpenAI(api_key=self.api_key)
-        print(f"Using OpenAI model: {self.model_name}")
-        self.enc = tiktoken.encoding_for_model(self.model_name)
+        self.tokenizer = tiktoken.encoding_for_model(self.model_name)
     
     async def evaluate_model(self, prompt: str) -> str:
         """
@@ -95,7 +94,7 @@ class OpenAI(ModelProvider):
         Returns:
             list[int]: A list of token IDs representing the encoded text.
         """
-        return self.enc.encode(text)
+        return self.tokenizer.encode(text)
     
     def decode_tokens(self, tokens: list[int], context_length: Optional[int] = None) -> str:
         """
@@ -108,7 +107,7 @@ class OpenAI(ModelProvider):
         Returns:
             str: The decoded text string.
         """
-        return self.enc.decode(tokens[:context_length])
+        return self.tokenizer.decode(tokens[:context_length])
     
     def get_langchain_runnable(self, context: str) -> str:
         """
@@ -149,3 +148,5 @@ class OpenAI(ModelProvider):
                 | model 
                 )
         return chain
+    
+
