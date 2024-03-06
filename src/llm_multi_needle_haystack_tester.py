@@ -19,6 +19,7 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
                  model_to_test: ModelProvider = None,
                  evaluator: Evaluator = None, 
                  print_ongoing_status = True,
+                 eval_set = "multi-needle-eval-sf",
                  **kwargs):
         """
         Initialize the LLMMultiNeedleHaystackTester with the capability to insert multiple needles.
@@ -29,7 +30,7 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
         self.needles = needles
         self.evaluator = evaluator
         self.model_to_test = model_to_test
-        print("MODEL TO TEST in LLMMultiNeedleHaystackTester:", self.model_to_test)
+        self.eval_set = eval_set
         self.model_name = self.model_to_test.model_name
         self.print_ongoing_status = print_ongoing_status
 
@@ -94,7 +95,7 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
         if self.evaluator.__class__.__name__ == "LangSmithEvaluator":
             print("EVALUATOR: LANGSMITH")
             chain = self.model_to_test.get_langchain_runnable(context)
-            self.evaluator.evaluate_chain(chain, context_length, depth_percent, self.model_name)
+            self.evaluator.evaluate_chain(chain, context_length, depth_percent, self.model_to_test.model_name, self.eval_set)
             test_end_time = time.time()
             test_elapsed_time = test_end_time - test_start_time
 
@@ -112,7 +113,7 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
 
             results = {
             # 'context' : context, # Uncomment this line if you'd like to save the context the model was asked to retrieve from. Warning: This will become very large.
-            'model' : self.model_name,
+            'model' : self.model_to_test.model_name,
             'context_length' : int(context_length),
             'depth_percent' : float(depth_percent),
             'version' : self.results_version,

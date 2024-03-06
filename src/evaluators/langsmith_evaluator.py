@@ -1,6 +1,6 @@
 import uuid
 from langsmith.client import Client
-from langchain.smith import RunEvalConfig, run_on_dataset
+from langchain.smith import RunEvalConfig
 from langsmith.schemas import Example, Run
 from langsmith.evaluation import EvaluationResult, run_evaluator
 from typing import Union
@@ -12,17 +12,17 @@ from langchain_core.utils.function_calling import convert_to_openai_tool
 
 class LangSmithEvaluator():
 
-    def __init__(self, model_name: str = "gpt-4-0125-preview", api_key: str = None):
-        self.eval_model_name = model_name
+    def __init__(self, api_key: str = None):
+        self.api_key = api_key
 
-    def evaluate_chain(self, chain, context_length, depth_percent, model_name):
-
-        eval_model_name = self.eval_model_name
+    def evaluate_chain(self, chain, context_length, depth_percent, model_name, eval_set):
 
         @run_evaluator
         def score_relevance(run: Run, example: Union[Example, None] = None):
             
-            print("--RUN IN LANGSMITH--")
+            print("--LANGSMITH EVAL--")
+            print("--MODEL: ", model_name)
+            print("--EVAL SET: ", eval_set)
             student_answer = run.outputs["output"]
             reference = example.outputs["answer"]
         
@@ -45,7 +45,8 @@ class LangSmithEvaluator():
                 score: int = Field(description="Score from grader")
             
             ## LLM
-            model = ChatOpenAI(temperature=0, model=model_name)
+            # Use most performant model as grader
+            model = ChatOpenAI(temperature=0, model="gpt-4-0125-preview")
             
             # Tool
             grade_tool_oai = convert_to_openai_tool(grade)
@@ -68,7 +69,7 @@ class LangSmithEvaluator():
             score = chain.invoke({"answer":student_answer,
                                   "reference":reference})
 
-            return EvaluationResult(key="check_execution", score=score[0].score)
+            return EvaluationResult(key="needles_retrieved", score=score[0].score)
 
         # Config
         evaluation_config = RunEvalConfig(
@@ -79,7 +80,7 @@ class LangSmithEvaluator():
         run_id = uuid.uuid4().hex[:4]
         project_name = "multi-needle-eval"
         client.run_on_dataset(
-            dataset_name="multi-needle-eval",
+            dataset_name=eval_set,
             llm_or_chain_factory=chain,
             project_metadata={"context_length": context_length, 
                             "depth_percent": depth_percent, 

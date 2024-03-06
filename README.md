@@ -75,15 +75,41 @@ Other Parameters:
 
 ## Multi Needle Evaluator
 
-xxx TO ADD xxx
+We can configure eval to perform multi-needle insertion into our context.
+
+We can enable this with `--multi_needle True`.
+
+This will insert the first needle at the specified `document_depth`.
+
+It will evenly distribute subsequent needles through the remainder of the context:
 
 ```
-python main.py --evaluator langsmith --context_lengths_num_intervals 3 --document_depth_percent_intervals 3 --provider openai --multi_needle True
+depth_percent += (100 - depth_percent) / len(self.needles))
 ```
+
+As an example, after the first needle is inserted at 50%, the remaining depth to consider is 100% - 50% = 50%.
+
+The adjustment for the next needle's depth percentage is: `depth_percent += (100 - depth_percent) / len(remaining_needles)`.
+
+For the second needle, the calculation is: `50 + (100 - 50) / 4 = 50 + 12.5 = 62.5%`.
+
+So, the second needle is inserted at the 62.5th percentile of the context.
 
 ## LangSmith Evaluator
 
-xxx TO ADD xxx
+We can enable this with `--evaluator langsmith`.
+
+Simple, 
+
+Along with this, we will propide the eval set we want to use, `--eval_set multi-needle-eval-pizza` for example.
+
+Here is the eval set, which has a question and reference answer. You can also and resulting runs:
+https://smith.langchain.com/public/74d2af1c-333d-4a73-87bc-a837f8f0f65c/d
+
+Here is the command to run this using multi-needle eval:
+```
+python main.py --evaluator langsmith --context_lengths_num_intervals 3 --document_depth_percent_intervals 3 --provider openai --model_name "gpt-4-0125-preview" --multi_needle True --eval_set multi-needle-eval-pizza --needles '["Figs are one of the three most delicious pizza toppings.", "Prosciutto is one of the three most delicious pizza toppings.", "Goat cheese is one of the three most delicious pizza toppings."]'
+```
 
 ## License
 

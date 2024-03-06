@@ -23,6 +23,7 @@ class OpenAI(ModelProvider):
         self.api_key = api_key or os.getenv('OPENAI_API_KEY')
 
         self.model = AsyncOpenAI(api_key=self.api_key)
+        print(f"Using OpenAI model: {self.model_name}")
         self.enc = tiktoken.encoding_for_model(self.model_name)
     
     async def evaluate_model(self, prompt: str) -> str:

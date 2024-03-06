@@ -36,6 +36,9 @@ class CommandArgs():
     final_context_length_buffer: Optional[int] = 200
     seconds_to_sleep_between_completions: Optional[float] = None
     print_ongoing_status: Optional[bool] = True
+    model_name: str = "gpt-3.5-turbo-0125" 
+    # LangSmith parameters
+    eval_set: Optional[str] = "multi-needle-eval-sf"
     # Multi-needle parameters
     multi_needle: Optional[bool] = False
     needles: List[str] = field(default_factory=lambda: [
@@ -49,9 +52,9 @@ class CommandArgs():
 def get_model_to_test(args: CommandArgs) -> ModelProvider:
     match args.provider.lower():
         case "openai":
-            return OpenAI(api_key=args.api_key)
+            return OpenAI(model_name=args.model_name, api_key=args.api_key)
         case "anthropic":
-            return Anthropic(api_key=args.api_key)
+            return Anthropic(model_name=args.model_name, api_key=args.api_key)
         case _:
             raise ValueError(f"Invalid provider: {args.provider}")
 
@@ -68,7 +71,6 @@ def get_evaluator(args: CommandArgs) -> Evaluator:
 
 def main():
     args = CLI(CommandArgs, as_positional=False)
-
     args.model_to_test = get_model_to_test(args)
     args.evaluator = get_evaluator(args)
     
