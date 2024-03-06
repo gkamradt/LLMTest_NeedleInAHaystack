@@ -52,15 +52,9 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
         that the total token count (context plus needles) does not exceed the maximum allowable context length, 
         which might otherwise lead to information being truncated.
 
-        Each needle is inserted into the context at a position determined by the specified depth percentage. 
-        The depth percentage dictates how deep into the context the needle is placed, with 0% representing the 
-        start of the context and 100% the end. To evenly distribute multiple needles, the method calculates 
-        insertion points for each needle based on the depth percentage and then adjusts the depth for subsequent 
-        needles to maintain even distribution.
-
-        This approach allows for the dynamic insertion of information at various "depths" within the context, 
-        simulating different levels of information density and testing the model's retrieval capabilities under 
-        varying conditions.
+        This approach calculates the initial insertion point for the first needle as before but then calculates even 
+        spacing for the remaining needles based on the remaining context length. It ensures that needles are 
+        distributed as evenly as possible throughout the context after the first insertion. 
         
         Args:
             context (str): The original context string.
@@ -80,14 +74,25 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
         if len(tokens_context) + total_needles_length > context_length:
             tokens_context = tokens_context[:context_length - total_needles_length]
 
-        # Insert needles at calculated points
-        for needle in self.needles:
-            tokens_needle = self.model_to_test.encode_text_to_tokens(needle)
-            # Insert each needle at its corresponding depth percentage
-            # For simplicity, evenly distribute needles throughout the context
-            insertion_point = int(len(tokens_context) * (depth_percent / 100))
-            tokens_context = tokens_context[:insertion_point] + tokens_needle + tokens_context[insertion_point:]
-            depth_percent += (100 - depth_percent) / len(self.needles)  # Adjust depth for next needle
+        # Initially distribute needles based on the initial depth percent for the first needle
+        insertion_point = int(len(tokens_context) * (depth_percent / 100))
+        tokens_context = tokens_context[:insertion_point] + self.model_to_test.encode_text_to_tokens(self.needles[0]) + tokens_context[insertion_point:]
+
+        # Calculate even spacing for the remaining needles
+        if len(self.needles) > 1:
+            # The remaining context length after the first insertion
+            remaining_length = len(tokens_context) - insertion_point
+            # The number of intervals equals the number of remaining needles
+            interval_length = remaining_length // (len(self.needles) - 1)
+
+            for i, needle in enumerate(self.needles[1:], start=1):
+                tokens_needle = self.model_to_test.encode_text_to_tokens(needle)
+                # Calculate the new insertion point for each remaining needle
+                insertion_point += interval_length
+                if insertion_point + len(tokens_needle) > len(tokens_context):
+                    # Ensure we don't exceed the context length
+                    insertion_point = len(tokens_context) - len(tokens_needle)
+                tokens_context = tokens_context[:insertion_point] + tokens_needle + tokens_context[insertion_point:]
 
         new_context = self.model_to_test.decode_tokens(tokens_context)
         return new_context
