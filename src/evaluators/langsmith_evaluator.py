@@ -1,24 +1,65 @@
-import uuid
-from langsmith.client import Client
-from langchain.smith import RunEvalConfig
-from langsmith.schemas import Example, Run
-from langsmith.evaluation import EvaluationResult, run_evaluator
 from typing import Union
-from langchain_openai import ChatOpenAI
-from langchain.prompts import PromptTemplate
-from langchain_core.pydantic_v1 import BaseModel, Field
+import uuid
+
+from langchain_openai import ChatOpenAI  
 from langchain.output_parsers.openai_tools import PydanticToolsParser
+from langchain.prompts import PromptTemplate
+from langchain.smith import RunEvalConfig
+from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.utils.function_calling import convert_to_openai_tool
+from langsmith.client import Client
+from langsmith.evaluation import EvaluationResult, run_evaluator
+from langsmith.schemas import Example, Run
+
 
 class LangSmithEvaluator():
+    """
+    An evaluator class that leverages the LangSmith API for evaluating language models' performance on specific tasks. 
+    This class primarily focuses on evaluating the ability of a language model to retrieve and accurately present information 
+    from a provided context (the "needle" in a "haystack").
+    """
 
     def __init__(self, api_key: str = None):
+        """
+        Initializes the LangSmithEvaluator with API key for evaluator model, if needed.
+
+        Args:
+            api_key (str, optional): The API key for authenticating evaluator model.
+        """
         self.api_key = api_key
 
     def evaluate_chain(self, chain, context_length, depth_percent, model_name, eval_set):
+        """
+        Evaluates a language model's chain of operations, specifically focusing on the model's ability to 
+        retrieve information accurately from a given context. This method defines a custom evaluator that
+        grades the language model's responses based on relevance to a reference answer.
+
+        Args:
+            chain: The LangChain runnable or chain of operations to be evaluated.
+            context_length (int): The length of the context in tokens.
+            depth_percent (float): The percentage depth in the context where the information (needle) is located.
+            model_name (str): The name of the language model being evaluated.
+            eval_set (str): The evaluation set identifier, used to categorize and reference the evaluation.
+
+        Details:
+            The evaluation involves creating a grading prompt that asks the model to grade student responses
+            based on their relevance to a given reference answer. This approach allows for quantifying the
+            model's accuracy in retrieving and synthesizing information from the provided context.
+        """
 
         @run_evaluator
         def score_relevance(run: Run, example: Union[Example, None] = None):
+            """
+            A custom evaluator function that grades the language model's response based on its relevance
+            to a reference answer.
+
+            Args:
+                run (Run): The execution run containing the model's response.
+                example (Union[Example, None]): An optional example containing the reference answer.
+
+            Returns:
+                EvaluationResult: The result of the evaluation, containing the relevance score.
+            """
             
             print("--LANGSMITH EVAL--")
             print("--MODEL: ", model_name)

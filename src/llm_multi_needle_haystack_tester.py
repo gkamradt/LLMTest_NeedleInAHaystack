@@ -1,19 +1,29 @@
 import asyncio
 import glob
 import json
-import numpy as np
 import os
 import time
-
-from .evaluators import Evaluator
-from .providers import ModelProvider
-
-from .llm_needle_haystack_tester import LLMNeedleHaystackTester
-
 from asyncio import Semaphore
 from datetime import datetime, timezone
 
+import numpy as np
+
+from .evaluators import Evaluator
+from .llm_needle_haystack_tester import LLMNeedleHaystackTester
+from .providers import ModelProvider
+
+
 class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
+    """
+    Extends LLMNeedleHaystackTester to support testing with multiple needles in the haystack.
+    
+    Attributes:
+        needles (list): A list of needles (facts) to insert into the haystack (context).
+        model_to_test (ModelProvider): The model being tested.
+        evaluator (Evaluator): The evaluator used to assess the model's performance.
+        print_ongoing_status (bool): Flag to print ongoing status messages.
+        eval_set (str): The evaluation set identifier.
+    """
     def __init__(self, *args, 
                  needles=[], 
                  model_to_test: ModelProvider = None,
@@ -21,11 +31,7 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
                  print_ongoing_status = True,
                  eval_set = "multi-needle-eval-sf",
                  **kwargs):
-        """
-        Initialize the LLMMultiNeedleHaystackTester with the capability to insert multiple needles.
-        
-        :param needles: A list of needles (random facts) to insert into the context.
-        """
+
         super().__init__(*args, model_to_test=model_to_test, **kwargs)
         self.needles = needles
         self.evaluator = evaluator
@@ -36,11 +42,33 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
 
     async def insert_needles(self, context, depth_percent, context_length):
         """
-        Inserts multiple needles into the context at specified depth percentages.
+        Inserts multiple needles (specific facts or pieces of information) into the original context string at 
+        designated depth percentages, effectively distributing these needles throughout the context. This method 
+        is designed to test a model's ability to retrieve specific information (needles) from a larger body of text 
+        (haystack) based on the placement depth of these needles.
+
+        The method first encodes the context and each needle into tokens to calculate their lengths in tokens. 
+        It then adjusts the context length to accommodate the final buffer length. This is crucial for ensuring 
+        that the total token count (context plus needles) does not exceed the maximum allowable context length, 
+        which might otherwise lead to information being truncated.
+
+        Each needle is inserted into the context at a position determined by the specified depth percentage. 
+        The depth percentage dictates how deep into the context the needle is placed, with 0% representing the 
+        start of the context and 100% the end. To evenly distribute multiple needles, the method calculates 
+        insertion points for each needle based on the depth percentage and then adjusts the depth for subsequent 
+        needles to maintain even distribution.
+
+        This approach allows for the dynamic insertion of information at various "depths" within the context, 
+        simulating different levels of information density and testing the model's retrieval capabilities under 
+        varying conditions.
         
-        :param context: The original context string.
-        :param depth_percent: The depth percent at which to insert the needles.
-        :param context_length: The total length of the context in tokens.
+        Args:
+            context (str): The original context string.
+            depth_percent (float): The depth percent at which to insert the needles.
+            context_length (int): The total length of the context in tokens, adjusted for final buffer.
+        
+        Returns:
+            str: The new context with needles inserted.
         """
         tokens_context = self.model_to_test.encode_text_to_tokens(context)
         context_length -= self.final_context_length_buffer
@@ -65,6 +93,16 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
         return new_context
 
     def encode_and_trim(self, context, context_length):
+        """
+        Encodes the context to tokens and trims it to the specified length.
+        
+        Args:
+            context (str): The context to encode and trim.
+            context_length (int): The desired length of the context in tokens.
+        
+        Returns:
+            str: The encoded and trimmed context.
+        """
         tokens = self.model_to_test.encode_text_to_tokens(context)
         if len(tokens) > context_length:
             context = self.model_to_test.decode_tokens(tokens, context_length)
@@ -72,7 +110,14 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
 
     async def generate_context(self, context_length, depth_percent):
         """
-        Overrides the generate_context method to insert multiple needles.
+        Generates a context of a specified length and inserts needles at given depth percentages.
+        
+        Args:
+            context_length (int): The total length of the context in tokens.
+            depth_percent (float): The depth percent for needle insertion.
+        
+        Returns:
+            str: The context with needles inserted.
         """
         context = self.read_context_files()
         context = self.encode_and_trim(context, context_length)
@@ -80,8 +125,13 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
         return context
     
     async def evaluate_and_log(self, context_length, depth_percent):
-        # Checks to see if you've already checked a length/percent/version.
-        # This helps if the program stop running and you want to restart later
+        """
+        Evaluates the model's performance with the generated context and logs the results.
+        
+        Args:
+            context_length (int): The length of the context in tokens.
+            depth_percent (float): The depth percent for needle insertion.
+        """
         if self.save_results:
             if self.result_exists(context_length, depth_percent):
                 return
