@@ -1,11 +1,13 @@
 from src import LLMNeedleHaystackTester
-from src.providers import ModelProvider, Anthropic, OpenAI
-from src.evaluators import Evaluator, OpenAIEvaluator
+from src import LLMMultiNeedleHaystackTester 
 
-from dataclasses import dataclass
+from src.providers import ModelProvider, Anthropic, OpenAI
+from src.evaluators import Evaluator, OpenAIEvaluator, LangSmithEvaluator
+
+from dataclasses import dataclass, field
 from dotenv import load_dotenv
 from jsonargparse import CLI
-from typing import Optional
+from typing import Optional, List
 
 load_dotenv()
 
@@ -34,6 +36,15 @@ class CommandArgs():
     final_context_length_buffer: Optional[int] = 200
     seconds_to_sleep_between_completions: Optional[float] = None
     print_ongoing_status: Optional[bool] = True
+    # Multi-needle parameters
+    multi_needle: Optional[bool] = False
+    needles: List[str] = field(default_factory=lambda: [
+        "The top ranked thing to do in San Francisco is go to Dolores Park.",
+        "The second rated thing to do in San Francisco is eat at Tony's Pizza Napoletana.",
+        "The third best thing to do in San Francisco is visit Alcatraz.",
+        "The fourth recommended thing to do in San Francisco is hike up Twin Peaks.",
+        "The fifth top activity in San Francisco is bike across the Golden Gate Bridge."
+    ])
 
 def get_model_to_test(args: CommandArgs) -> ModelProvider:
     match args.provider.lower():
@@ -50,6 +61,8 @@ def get_evaluator(args: CommandArgs) -> Evaluator:
             return OpenAIEvaluator(question_asked=args.retrieval_question,
                                    true_answer=args.needle,
                                    api_key=args.evaluator_api_key)
+        case "langsmith":
+            return LangSmithEvaluator()
         case _:
             raise ValueError(f"Invalid evaluator: {args.evaluator}")
 
@@ -58,8 +71,13 @@ def main():
 
     args.model_to_test = get_model_to_test(args)
     args.evaluator = get_evaluator(args)
-
-    tester = LLMNeedleHaystackTester(**args.__dict__)
+    
+    if args.multi_needle == True:
+        print("Testing multi-needle")
+        tester = LLMMultiNeedleHaystackTester(**args.__dict__)
+    else: 
+        print("Testing single-needle")
+        tester = LLMNeedleHaystackTester(**args.__dict__)
     tester.start_test()
 
 if __name__ == "__main__":

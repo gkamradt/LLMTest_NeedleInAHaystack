@@ -3,8 +3,11 @@ import tiktoken
 
 from .model import ModelProvider
 
+from operator import itemgetter
 from openai import AsyncOpenAI
 from typing import Optional
+from langchain_openai import ChatOpenAI  
+from langchain.prompts import PromptTemplate
 
 class OpenAI(ModelProvider):
     def __init__(self, model_name: str = "gpt-3.5-turbo-0125", api_key: str = None):
@@ -50,3 +53,24 @@ class OpenAI(ModelProvider):
     
     def decode_tokens(self, tokens: list[int], context_length: Optional[int] = None) -> str:
         return self.enc.decode(tokens[:context_length])
+    
+    def get_langchain_runnable(self, context: str) -> str:
+
+
+        template = """You are a helpful AI bot that answers questions for a user given the context provided.\n 
+        Keep your response short and direct. Don't give information outside the document or repeat your findings. Here is your context: 
+        \n ------- \n {context} \n ------- \n
+        Here is the user question: \n --- --- --- \n {question}"""
+        
+        prompt = PromptTemplate(
+            template=template,
+            input_variables=["context", "question"],
+        )
+        # Create a LangChain runnable
+        model = ChatOpenAI(temperature=0, model=self.model_name)
+        chain = ( {"context": lambda x: context,
+                  "question": itemgetter("question")} 
+                | prompt 
+                | model 
+                )
+        return chain

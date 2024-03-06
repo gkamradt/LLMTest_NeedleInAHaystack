@@ -1,4 +1,4 @@
-# Needle In A Haystack - Pressure Testing LLMs
+t# Needle In A Haystack - Pressure Testing LLMs
 
 Supported model providers: OpenAI, Anthropic
 
@@ -18,7 +18,7 @@ $ pip install -r requirements.txt
 ```
 You can then run the analysis on OpenAI or Anthropic models by running `main.py` with the command line arguments shown below. `LLMNeedleHaystackTester` parameters can also be passed as command line arguments, except `model_to_test` and `evaluator` of course.
 * `provider` - The provider of the model, available options are `openai` and `anthropic`. Defaults to `openai`
-* `evaluator` - The provider for the evaluator model, only `openai` is currently supported. Defaults to `openai`.
+* `evaluator` - The evaluator, which can either be a `model` or `LangSmith`. See more on `LangSmith` below. If using a `model``, only `openai` is currently supported. Defaults to `openai`.
 * `api_key` - API key for either OpenAI or Anthropic provider. Can either be passed as a command line argument or an environment variable named `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` depending on the provider. Defaults to `None`.
 * `evaluator_api_key` - API key for OpenAI provider. Can either be passed as a command line argument or an environment variable named `OPENAI_API_KEY`. Defaults to `None`
 
@@ -56,6 +56,10 @@ I've put the results from the original tests in `/original_results`. I've upgrad
 * `seconds_to_sleep_between_completions` - Default: None, set # of seconds if you'd like to slow down your requests
 * `print_ongoing_status` - Default: True, whether or not to print the status of test as they complete
 
+`LLMMultiNeedleHaystackTester` parameters:
+* `multi_needle` - True or False, whether to run multi-needle
+* `needles` - List of needles to insert in the context
+
 Other Parameters:
 * `api_key` - API key for either OpenAI or Anthropic provider. Can either be passed when creating the object or an environment variable
 * `model_name` - The name of the model you'd like to use. Should match the exact value which needs to be passed to the api. Ex: For OpenAI inference and evaluator models it would be `gpt-3.5-turbo-0125`.
@@ -68,6 +72,18 @@ Other Parameters:
 
 ## Anthropic's Claude 2.1 (Run 11/21/2023)
 <img src="img/Claude_2_1_testing.png" alt="GPT-4-128 Context Testing" width="800"/>
+
+## Multi Needle Evaluator
+
+xxx TO ADD xxx
+
+```
+python main.py --evaluator langsmith --context_lengths_num_intervals 3 --document_depth_percent_intervals 3 --provider openai --multi_needle True
+```
+
+## LangSmith Evaluator
+
+xxx TO ADD xxx
 
 ## License
 
