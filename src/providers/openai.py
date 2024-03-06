@@ -20,7 +20,7 @@ class OpenAI(ModelProvider):
         self.api_key = api_key or os.getenv('OPENAI_API_KEY')
 
         self.model = AsyncOpenAI(api_key=self.api_key)
-        self.enc = tiktoken.encoding_for_model(self.model_name)
+        self.tokenizer = tiktoken.encoding_for_model(self.model_name)
     
     async def evaluate_model(self, prompt: str) -> str:
         response = await self.model.chat.completions.create(
@@ -46,7 +46,7 @@ class OpenAI(ModelProvider):
             }]
     
     def encode_text_to_tokens(self, text: str) -> list[int]:
-        return self.enc.encode(text)
+        return self.tokenizer.encode(text)
     
     def decode_tokens(self, tokens: list[int], context_length: Optional[int] = None) -> str:
-        return self.enc.decode(tokens[:context_length])
+        return self.tokenizer.decode(tokens[:context_length])

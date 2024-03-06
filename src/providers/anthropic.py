@@ -2,7 +2,8 @@ import os
 
 from .model import ModelProvider
 
-from anthropic import AsyncAnthropic, Anthropic
+from anthropic import Anthropic as AnthropicModel
+from anthropic import AsyncAnthropic
 from typing import Optional
 
 class Anthropic(ModelProvider):
@@ -22,7 +23,7 @@ class Anthropic(ModelProvider):
         self.api_key = api_key or os.getenv('ANTHROPIC_API_KEY')
 
         self.model = AsyncAnthropic(api_key=self.api_key)
-        self.enc = Anthropic().get_tokenizer()
+        self.tokenizer = AnthropicModel().get_tokenizer()
 
         # Generate the prompt structure for the Anthropic model
         # Replace the following file with the appropriate prompt structure
@@ -43,8 +44,8 @@ class Anthropic(ModelProvider):
             context=context)
     
     def encode_text_to_tokens(self, text: str) -> list[int]:
-        return self.enc.encode(text).ids
+        return self.tokenizer.encode(text).ids
     
     def decode_tokens(self, tokens: list[int], context_length: Optional[int] = None) -> str:
         # Assuming you have a different decoder for Anthropic
-        return self.enc.decode(tokens[:context_length])
+        return self.tokenizer.decode(tokens[:context_length])
