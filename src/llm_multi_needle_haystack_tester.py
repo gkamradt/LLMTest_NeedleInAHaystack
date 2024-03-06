@@ -79,7 +79,10 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
         # Ensure context length accounts for needles
         if len(tokens_context) + total_needles_length > context_length:
             tokens_context = tokens_context[:context_length - total_needles_length]
-
+        
+        # To evenly distribute the needles, we calculate the intervals they need to be inserted.
+        depth_percent_interval = (100 - depth_percent) / len(self.needles)
+        
         # Insert needles at calculated points
         for needle in self.needles:
             tokens_needle = self.model_to_test.encode_text_to_tokens(needle)
@@ -87,7 +90,7 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
             # For simplicity, evenly distribute needles throughout the context
             insertion_point = int(len(tokens_context) * (depth_percent / 100))
             tokens_context = tokens_context[:insertion_point] + tokens_needle + tokens_context[insertion_point:]
-            depth_percent += (100 - depth_percent) / len(self.needles)  # Adjust depth for next needle
+            depth_percent += depth_percent_interval  # Adjust depth for next needle
 
         new_context = self.model_to_test.decode_tokens(tokens_context)
         return new_context
