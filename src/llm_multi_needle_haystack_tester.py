@@ -73,26 +73,22 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
         # Ensure context length accounts for needles
         if len(tokens_context) + total_needles_length > context_length:
             tokens_context = tokens_context[:context_length - total_needles_length]
-
-        # Initially distribute needles based on the initial depth percent for the first needle
-        insertion_point = int(len(tokens_context) * (depth_percent / 100))
-        tokens_context = tokens_context[:insertion_point] + self.model_to_test.encode_text_to_tokens(self.needles[0]) + tokens_context[insertion_point:]
-
-        # Calculate even spacing for the remaining needles
-        if len(self.needles) > 1:
-            # The remaining context length after the first insertion
-            remaining_length = len(tokens_context) - insertion_point
-            # The number of intervals equals the number of remaining needles
-            interval_length = remaining_length // (len(self.needles) - 1)
-
-            for i, needle in enumerate(self.needles[1:], start=1):
-                tokens_needle = self.model_to_test.encode_text_to_tokens(needle)
-                # Calculate the new insertion point for each remaining needle
-                insertion_point += interval_length
-                if insertion_point + len(tokens_needle) > len(tokens_context):
-                    # Ensure we don't exceed the context length
-                    insertion_point = len(tokens_context) - len(tokens_needle)
-                tokens_context = tokens_context[:insertion_point] + tokens_needle + tokens_context[insertion_point:]
+        
+        # To evenly distribute the needles, we calculate the intervals they need to be inserted.
+        depth_percent_interval = (100 - depth_percent) / len(self.needles)
+        
+        # Insert needles at calculated points
+        for needle in self.needles:
+            tokens_needle = self.model_to_test.encode_text_to_tokens(needle)
+            # Insert each needle at its corresponding depth percentage
+            # For simplicity, evenly distribute needles throughout the context
+            insertion_point = int(len(tokens_context) * (depth_percent / 100))
+            tokens_context = tokens_context[:insertion_point] + tokens_needle + tokens_context[insertion_point:]
+            # Log 
+            insertion_percentage = (insertion_point / len(tokens_context)) * 100
+            print(f"Inserted '{needle}' at {insertion_percentage:.2f}% of the context, total length now: {len(tokens_context)} tokens")
+            # Adjust depth for next needle
+            depth_percent += depth_percent_interval  
 
         new_context = self.model_to_test.decode_tokens(tokens_context)
         return new_context
