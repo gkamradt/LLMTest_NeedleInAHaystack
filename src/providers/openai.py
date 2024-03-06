@@ -7,9 +7,16 @@ from openai import AsyncOpenAI
 from typing import Optional
 
 class OpenAI(ModelProvider):
-    def __init__(self, model_name: str = "gpt-3.5-turbo-0125", api_key: str = None):
+    DEFAULT_MODEL_KWARGS: dict = dict(max_tokens  = 300,
+                                      temperature = 0)
+
+    def __init__(self,
+                 model_name: str = "gpt-3.5-turbo-0125",
+                 model_kwargs: dict = DEFAULT_MODEL_KWARGS,
+                 api_key: str = None):
         """
         :param model_name: The name of the model. Default is 'gpt-3.5-turbo-0125'.
+        :param model_kwargs: Model configuration. Default is {max_tokens: 300, temperature: 0}
         :param api_key: The API key for OpenAI. Default is None.
         """
         
@@ -17,6 +24,7 @@ class OpenAI(ModelProvider):
             raise ValueError("Either api_key must be supplied with init, or OPENAI_API_KEY must be in env. Used for evaluation model")
 
         self.model_name = model_name
+        self.model_kwargs = model_kwargs
         self.api_key = api_key or os.getenv('OPENAI_API_KEY')
 
         self.model = AsyncOpenAI(api_key=self.api_key)
@@ -26,8 +34,7 @@ class OpenAI(ModelProvider):
         response = await self.model.chat.completions.create(
                 model=self.model_name,
                 messages=prompt,
-                max_tokens=300,
-                temperature=0
+                **self.model_kwargs
             )
         return response.choices[0].message.content
     
