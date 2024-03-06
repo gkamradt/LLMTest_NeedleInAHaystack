@@ -97,19 +97,30 @@ So, the second needle is inserted at the 62.5th percentile of the context.
 
 ## LangSmith Evaluator
 
-We can enable this with `--evaluator langsmith`.
+You can use LangSmith to orchestrate evals and store results.
 
-Simple, 
+(1) Sign up for [LangSmith](https://docs.smith.langchain.com/setup)
+(2) Set env variables for LangSmith as specified in the setup.
+(3) In the `Datasets + Testing` tab, use `+ Dataset` to create a new dataset, call it `multi-needle-eval-sf` to start.
+(4) Populate the dataset with a test question:
+```
+question: What are the 5 best things to do in San Franscisco?
+answer: "The 5 best things to do in San Francisco are: 1) Go to Dolores Park. 2) Eat at Tony's Pizza Napoletana. 3) Visit Alcatraz. 4) Hike up Twin Peaks. 5) Bike across the Golden Gate Bridge"
+```
+![Screenshot 2024-03-05 at 4 54 15 PM](https://github.com/rlancemartin/LLMTest_NeedleInAHaystack/assets/122662504/2f903955-ed1d-49cc-b995-ed0407d6212a)
+(5) Run with ` --evaluator langsmith` and `--eval_set multi-needle-eval-sf` to run against our recently created eval set.
 
-Along with this, we will propide the eval set we want to use, `--eval_set multi-needle-eval-pizza` for example.
+Let's see all these working together on a new dataset, `multi-needle-eval-pizza`.
 
-Here is the eval set, which has a question and reference answer. You can also and resulting runs:
+Here is the `multi-needle-eval-pizza` eval set, which has a question and reference answer. You can also and resulting runs:
 https://smith.langchain.com/public/74d2af1c-333d-4a73-87bc-a837f8f0f65c/d
 
-Here is the command to run this using multi-needle eval:
+Here is the command to run this using multi-needle eval and passing the relevant needles: 
 ```
 python main.py --evaluator langsmith --context_lengths_num_intervals 3 --document_depth_percent_intervals 3 --provider openai --model_name "gpt-4-0125-preview" --multi_needle True --eval_set multi-needle-eval-pizza --needles '["Figs are one of the three most delicious pizza toppings.", "Prosciutto is one of the three most delicious pizza toppings.", "Goat cheese is one of the three most delicious pizza toppings."]'
 ```
+
+
 
 ## License
 
