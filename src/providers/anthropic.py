@@ -1,10 +1,13 @@
 import os
+from operator import itemgetter
+from typing import Optional
+
+from anthropic import AsyncAnthropic
+from anthropic import Anthropic as AnthropicModel
+from langchain_anthropic import ChatAnthropic
+from langchain.prompts import PromptTemplate
 
 from .model import ModelProvider
-
-from anthropic import Anthropic as AnthropicModel
-from anthropic import AsyncAnthropic
-from typing import Optional
 
 class Anthropic(ModelProvider):
     def __init__(self, model_name: str = "claude", api_key: str = None):
@@ -49,3 +52,43 @@ class Anthropic(ModelProvider):
     def decode_tokens(self, tokens: list[int], context_length: Optional[int] = None) -> str:
         # Assuming you have a different decoder for Anthropic
         return self.tokenizer.decode(tokens[:context_length])
+    
+    def get_langchain_runnable(self, context: str) -> str:
+        """
+        Creates a LangChain runnable that constructs a prompt based on a given context and a question, 
+        queries the Anthropic model, and returns the model's response. This method leverages the LangChain 
+        library to build a sequence of operations: extracting input variables, generating a prompt, 
+        querying the model, and processing the response.
+
+        Args:
+            context (str): The context or background information relevant to the user's question. 
+            This context is provided to the model to aid in generating relevant and accurate responses.
+
+        Returns:
+            str: A LangChain runnable object that can be executed to obtain the model's response to a 
+            dynamically provided question. The runnable encapsulates the entire process from prompt 
+            generation to response retrieval.
+
+        Example:
+            To use the runnable:
+                - Define the context and question.
+                - Execute the runnable with these parameters to get the model's response.
+        """
+
+        template = """You are a helpful AI bot that answers questions for a user given the context provided.\n 
+        Keep your response short and direct. Don't give information outside the document or repeat your findings. Here is your context: 
+        \n ------- \n {context} \n ------- \n
+        Here is the user question: \n --- --- --- \n {question}"""
+        
+        prompt = PromptTemplate(
+            template=template,
+            input_variables=["context", "question"],
+        )
+        # Create a LangChain runnable
+        model = ChatAnthropic(temperature=0, model=self.model_name)
+        chain = ( {"context": lambda x: context,
+                  "question": itemgetter("question")} 
+                | prompt 
+                | model 
+                )
+        return chain
