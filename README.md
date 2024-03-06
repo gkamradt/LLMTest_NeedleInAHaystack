@@ -75,25 +75,17 @@ Other Parameters:
 
 ## Multi Needle Evaluator
 
-We can configure eval to perform multi-needle insertion into our context.
+To enable multi-needle insertion into our context, use `--multi_needle True`.
 
-We can enable this with `--multi_needle True`.
+This inserts the first needle at the specified `document_depth`, then evenly distributes subsequent needles through the remaining context after this depth.
 
-This will insert the first needle at the specified `document_depth`.
-
-It will evenly distribute subsequent needles through the remainder of the context:
+For even spacing, it calculates the `depth_percent_interval` as:
 
 ```
-depth_percent += (100 - depth_percent) / len(self.needles))
+depth_percent_interval = (100 - depth_percent) / len(self.needles)
 ```
 
-As an example, after the first needle is inserted at 50%, the remaining depth to consider is 100% - 50% = 50%.
-
-The adjustment for the next needle's depth percentage is: `depth_percent += (100 - depth_percent) / len(remaining_needles)`.
-
-For the second needle, the calculation is: `50 + (100 - 50) / 4 = 50 + 12.5 = 62.5%`.
-
-So, the second needle is inserted at the 62.5th percentile of the context.
+So, the first needle is placed at a depth percent of `depth_percent`, the second at `depth_percent + depth_percent_interval`, the third at `depth_percent + 2 * depth_percent_interval`, and so on.
 
 ## LangSmith Evaluator
 
