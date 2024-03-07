@@ -166,7 +166,7 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
         if self.evaluator.__class__.__name__ == "LangSmithEvaluator":  
             print("EVALUATOR: LANGSMITH")
             chain = self.model_to_test.get_langchain_runnable(context)
-            self.evaluator.evaluate_chain(chain, context_length, depth_percent, self.model_to_test.model_name, self.eval_set)
+            self.evaluator.evaluate_chain(chain, context_length, depth_percent, self.model_to_test.model_name, self.eval_set, len(self.needles))
             test_end_time = time.time()
             test_elapsed_time = test_end_time - test_start_time
 
