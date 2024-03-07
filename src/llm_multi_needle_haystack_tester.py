@@ -79,16 +79,35 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
         
         # Insert needles at calculated points
         for needle in self.needles:
+
             tokens_needle = self.model_to_test.encode_text_to_tokens(needle)
-            # Insert each needle at its corresponding depth percentage
-            # For simplicity, evenly distribute needles throughout the context
-            insertion_point = int(len(tokens_context) * (depth_percent / 100))
-            tokens_context = tokens_context[:insertion_point] + tokens_needle + tokens_context[insertion_point:]
-            # Log 
-            insertion_percentage = (insertion_point / len(tokens_context)) * 100
-            print(f"Inserted '{needle}' at {insertion_percentage:.2f}% of the context, total length now: {len(tokens_context)} tokens")
-            # Adjust depth for next needle
-            depth_percent += depth_percent_interval  
+
+            if depth_percent == 100:
+                # If your depth percent is 100 (which means your needle is the last thing in the doc), throw it at the end
+                tokens_context = tokens_context + tokens_needle
+            else:
+                # Go get the position (in terms of tokens) to insert your needle
+                insertion_point = int(len(tokens_context) * (depth_percent / 100))
+
+                # tokens_new_context represents the tokens before the needle
+                tokens_new_context = tokens_context[:insertion_point]
+
+                # We want to make sure that we place our needle at a sentence break so we first see what token a '.' is
+                period_tokens = self.model_to_test.encode_text_to_tokens('.')
+                
+                # Then we iteration backwards until we find the first period
+                while tokens_new_context and tokens_new_context[-1] not in period_tokens:
+                    insertion_point -= 1
+                    tokens_new_context = tokens_context[:insertion_point]
+                    
+                # Insert the needle into the context at the found position
+                tokens_context = tokens_context[:insertion_point] + tokens_needle + tokens_context[insertion_point:]
+                # Log 
+                insertion_percentage = (insertion_point / len(tokens_context)) * 100
+                print(f"Inserted '{needle}' at {insertion_percentage:.2f}% of the context, total length now: {len(tokens_context)} tokens")
+                
+                # Adjust depth for next needle
+                depth_percent += depth_percent_interval  
 
         new_context = self.model_to_test.decode_tokens(tokens_context)
         return new_context
@@ -233,7 +252,7 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
         print (f"- Model: {self.model_name}")
         print (f"- Context Lengths: {len(self.context_lengths)}, Min: {min(self.context_lengths)}, Max: {max(self.context_lengths)}")
         print (f"- Document Depths: {len(self.document_depth_percents)}, Min: {min(self.document_depth_percents)}%, Max: {max(self.document_depth_percents)}%")
-        print (f"- Needle: {self.needle.strip()}")
+        print (f"- Needles: {self.needles}")
         print ("\n\n")
 
     def start_test(self):
