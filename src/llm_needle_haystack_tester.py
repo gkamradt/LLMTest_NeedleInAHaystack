@@ -64,6 +64,8 @@ class LLMNeedleHaystackTester:
         """
         if not model_to_test:
             raise ValueError("A language model must be provided to test.")
+        if not evaluator:
+            raise ValueError("An evaluator must be provided to evaluate the model's response.")
         if not needle or not haystack_dir or not retrieval_question:
             raise ValueError("Needle, haystack, and retrieval_question must be provided.")
 

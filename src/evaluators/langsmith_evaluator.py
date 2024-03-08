@@ -1,4 +1,4 @@
-from typing import Union
+import os
 import uuid
 
 from langchain_openai import ChatOpenAI  
@@ -12,7 +12,7 @@ from langsmith.evaluation import EvaluationResult, run_evaluator
 from langsmith.schemas import Example, Run
 
 @run_evaluator
-def score_relevance(run: Run, example: Union[Example, None] = None):
+def score_relevance(run: Run, example: Example | None = None):
     """
     A custom evaluator function that grades the language model's response based on its relevance
     to a reference answer.
@@ -24,10 +24,6 @@ def score_relevance(run: Run, example: Union[Example, None] = None):
     Returns:
         EvaluationResult: The result of the evaluation, containing the relevance score.
     """
-    
-    print("--LANGSMITH EVAL--")
-    #print("--MODEL: ", model_name)
-    #print("--EVAL SET: ", eval_set)
     student_answer = run.outputs["output"]
     reference = example.outputs["answer"]
 
@@ -90,7 +86,10 @@ class LangSmithEvaluator():
         Args:
             api_key (str, optional): The API key for authenticating evaluator model.
         """
-        self.api_key = api_key
+        if (api_key is None) and (not os.getenv('LANGCHAIN_API_KEY')):
+            raise ValueError("Either api_key must be supplied with init, or LANGCHAIN_API_KEY must be in env. Used for evaluation model")
+        
+        self.api_key = api_key or os.getenv('LANGCHAIN_API_KEY')
 
     def evaluate_chain(self, chain, context_length, depth_percent, model_name, eval_set):
         """
