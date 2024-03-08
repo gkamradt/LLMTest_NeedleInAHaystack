@@ -278,8 +278,6 @@ class LLMNeedleHaystackTester:
         new_context = self.model_to_test.decode_tokens(tokens_new_context)
         return new_context
 
-<<<<<<< HEAD:needlehaystack/llm_needle_haystack_tester.py
-=======
     def evaluate_response(self, response):
         accuracy_criteria = {
             "accuracy": """
@@ -312,7 +310,6 @@ class LLMNeedleHaystackTester:
 
         return int(eval_result['score'])
 
->>>>>>> Fixed a typo in evaluation function:LLMNeedleHaystackTester.py
     def get_context_length_in_tokens(self, context):
         return len(self.model_to_test.encode_text_to_tokens(context))
 
