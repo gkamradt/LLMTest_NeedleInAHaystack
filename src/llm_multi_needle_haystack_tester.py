@@ -39,6 +39,7 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
         self.eval_set = eval_set
         self.model_name = self.model_to_test.model_name
         self.print_ongoing_status = print_ongoing_status
+        self.insertion_percentages = []
 
     async def insert_needles(self, context, depth_percent, context_length):
         """
@@ -102,8 +103,10 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
                     
                 # Insert the needle into the context at the found position
                 tokens_context = tokens_context[:insertion_point] + tokens_needle + tokens_context[insertion_point:]
+
                 # Log 
                 insertion_percentage = (insertion_point / len(tokens_context)) * 100
+                self.insertion_percentages.append(insertion_percentage)
                 print(f"Inserted '{needle}' at {insertion_percentage:.2f}% of the context, total length now: {len(tokens_context)} tokens")
                 
                 # Adjust depth for next needle
@@ -162,11 +165,11 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
         test_start_time = time.time()
 
         # LangSmith
-        ## TODO: Support for many evaluators 
+        ## TODO: Support for other evaluators 
         if self.evaluator.__class__.__name__ == "LangSmithEvaluator":  
             print("EVALUATOR: LANGSMITH")
             chain = self.model_to_test.get_langchain_runnable(context)
-            self.evaluator.evaluate_chain(chain, context_length, depth_percent, self.model_to_test.model_name, self.eval_set, len(self.needles))
+            self.evaluator.evaluate_chain(chain, context_length, depth_percent, self.model_to_test.model_name, self.eval_set, len(self.needles), self.needles, self.insertion_percentages)
             test_end_time = time.time()
             test_elapsed_time = test_end_time - test_start_time
 

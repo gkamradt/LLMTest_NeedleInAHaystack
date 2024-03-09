@@ -92,7 +92,7 @@ class LangSmithEvaluator():
         """
         self.api_key = api_key
 
-    def evaluate_chain(self, chain, context_length, depth_percent, model_name, eval_set, num_needles=None):
+    def evaluate_chain(self, chain, context_length, depth_percent, model_name, eval_set, num_needles, needles, insertion_percentages):
         """
         Evaluates a language model's chain of operations, specifically focusing on the model's ability to 
         retrieve information accurately from a given context. This method defines a custom evaluator that
@@ -104,6 +104,10 @@ class LangSmithEvaluator():
             depth_percent (float): The percentage depth in the context where the information (needle) is located.
             model_name (str): The name of the language model being evaluated.
             eval_set (str): The evaluation set identifier, used to categorize and reference the evaluation.
+            num_needles (int): The number of needles in the haystack. 
+            needles (list[str]): The needles inserted into the haystack. 
+            insertion_percentages (list[float]): The location of each needle in the haystack. 
+
 
         Details:
             The evaluation involves creating a grading prompt that asks the model to grade student responses
@@ -124,6 +128,8 @@ class LangSmithEvaluator():
             project_metadata={"context_length": context_length, 
                             "depth_percent": depth_percent, 
                             "num_needles": num_needles,
+                            "needles": needles,
+                            "insertion_percentages": insertion_percentages,
                             "model_name": model_name},
             evaluation=evaluation_config,
             project_name=f"{context_length}-{depth_percent}--{model_name}--{project_name}--{run_id}",
