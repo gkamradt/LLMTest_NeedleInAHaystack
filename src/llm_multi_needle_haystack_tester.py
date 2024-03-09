@@ -78,6 +78,9 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
         # To evenly distribute the needles, we calculate the intervals they need to be inserted.
         depth_percent_interval = (100 - depth_percent) / len(self.needles)
         
+        # Reset the insertion percentages list for the current context
+        self.insertion_percentages = []
+
         # Insert needles at calculated points
         for needle in self.needles:
 
