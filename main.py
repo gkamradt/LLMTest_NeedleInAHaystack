@@ -14,7 +14,7 @@ load_dotenv()
 class CommandArgs():
     provider: str = "openai"
     evaluator: str = "openai"
-    model_name: Optional[str] = "gpt-3.5-turbo-0125"
+    model_name: str = "gpt-3.5-turbo-0125"
     evaluator_model_name: Optional[str] = "gpt-3.5-turbo-0125"
     api_key: Optional[str] = None
     evaluator_api_key: Optional[str] = None
@@ -37,7 +37,6 @@ class CommandArgs():
     final_context_length_buffer: Optional[int] = 200
     seconds_to_sleep_between_completions: Optional[float] = None
     print_ongoing_status: Optional[bool] = True
-    model_name: str = "gpt-3.5-turbo-0125" 
     # LangSmith parameters
     eval_set: Optional[str] = "multi-needle-eval-sf"
     # Multi-needle parameters
