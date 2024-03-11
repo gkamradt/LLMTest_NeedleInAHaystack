@@ -94,50 +94,6 @@ def get_evaluator(args: CommandArgs) -> Evaluator:
         case _:
             raise ValueError(f"Invalid evaluator: {args.evaluator}")
 
-def get_model_to_test(args: CommandArgs) -> ModelProvider:
-    """
-    Determines and returns the appropriate model provider based on the provided command arguments.
-    
-    Args:
-        args (CommandArgs): The command line arguments parsed into a CommandArgs dataclass instance.
-        
-    Returns:
-        ModelProvider: An instance of the specified model provider class.
-    
-    Raises:
-        ValueError: If the specified provider is not supported.
-    """
-    match args.provider.lower():
-        case "openai":
-            return OpenAI(model_name=args.model_name, api_key=args.api_key)
-        case "anthropic":
-            return Anthropic(model_name=args.model_name, api_key=args.api_key)
-        case _:
-            raise ValueError(f"Invalid provider: {args.provider}")
-
-def get_evaluator(args: CommandArgs) -> Evaluator:
-    """
-    Selects and returns the appropriate evaluator based on the provided command arguments.
-    
-    Args:
-        args (CommandArgs): The command line arguments parsed into a CommandArgs dataclass instance.
-        
-    Returns:
-        Evaluator: An instance of the specified evaluator class.
-        
-    Raises:
-        ValueError: If the specified evaluator is not supported.
-    """
-    match args.evaluator.lower():
-        case "openai":
-            return OpenAIEvaluator(question_asked=args.retrieval_question,
-                                   true_answer=args.needle,
-                                   api_key=args.evaluator_api_key)
-        case "langsmith":
-            return LangSmithEvaluator()
-        case _:
-            raise ValueError(f"Invalid evaluator: {args.evaluator}")
-
 def main():
     """
     The main function to execute the testing process based on command line arguments.
