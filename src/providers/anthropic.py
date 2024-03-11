@@ -10,9 +10,16 @@ from langchain.prompts import PromptTemplate
 from .model import ModelProvider
 
 class Anthropic(ModelProvider):
-    def __init__(self, model_name: str = "claude-2.1", api_key: str = None):
+    DEFAULT_MODEL_KWARGS: dict = dict(max_tokens_to_sample  = 300,
+                                      temperature           = 0)
+
+    def __init__(self,
+                 model_name: str = "claude-2.1",
+                 model_kwargs: dict = DEFAULT_MODEL_KWARGS,
+                 api_key: str = None):
         """
         :param model_name: The name of the model. Default is 'claude'.
+        :param model_kwargs: Model configuration. Default is {max_tokens_to_sample: 300, temperature: 0}
         :param api_key: The API key for Anthropic. Default is None.
         """
 
@@ -23,6 +30,7 @@ class Anthropic(ModelProvider):
             raise ValueError("Either api_key must be supplied with init, or ANTHROPIC_API_KEY must be in env.")
 
         self.model_name = model_name
+        self.model_kwargs = model_kwargs
         self.api_key = api_key or os.getenv('ANTHROPIC_API_KEY')
 
         self.model = AsyncAnthropic(api_key=self.api_key)
@@ -36,9 +44,8 @@ class Anthropic(ModelProvider):
     async def evaluate_model(self, prompt: str) -> str:
         response = await self.model.completions.create(
             model=self.model_name,
-            max_tokens_to_sample=300,
             prompt=prompt,
-            temperature=0)
+            **self.model_kwargs)
         return response.completion
 
     def generate_prompt(self, context: str, retrieval_question: str) -> str | list[dict[str, str]]:
