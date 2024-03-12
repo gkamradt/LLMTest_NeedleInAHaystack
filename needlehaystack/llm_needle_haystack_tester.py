@@ -278,38 +278,6 @@ class LLMNeedleHaystackTester:
         new_context = self.model_to_test.decode_tokens(tokens_new_context)
         return new_context
 
-    def evaluate_response(self, response):
-        accuracy_criteria = {
-            "accuracy": """
-            Score 1: The answer is completely unrelated to the reference.
-            Score 3: The answer has minor relevance but does not align with the reference.
-            Score 5: The answer has moderate relevance but contains inaccuracies.
-            Score 7: The answer aligns with the reference but has minor omissions.
-            Score 10: The answer is completely accurate and aligns perfectly with the reference.
-            Only respond with a numerical score
-            """
-        }
-
-        # Using GPT-4 to evaluate
-        evaluator = load_evaluator(
-            "labeled_score_string",
-            criteria=accuracy_criteria,
-            llm=self.evaluation_model,
-        )
-
-        eval_result = evaluator.evaluate_strings(
-            # The models response
-            prediction=response,
-
-            # The actual answer
-            reference=self.needle,
-
-            # The question asked
-            input=self.retrieval_question,
-        )
-
-        return int(eval_result['score'])
-
     def get_context_length_in_tokens(self, context):
         return len(self.model_to_test.encode_text_to_tokens(context))
 
