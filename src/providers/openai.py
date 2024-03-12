@@ -19,15 +19,22 @@ class OpenAI(ModelProvider):
         model_name (str): The name of the OpenAI model to use for evaluations and interactions.
         api_key (str): The API key for accessing OpenAI services.
         model (AsyncOpenAI): An instance of the AsyncOpenAI client for asynchronous API calls.
-        enc (Encoder): An encoder instance for encoding and decoding text to and from token representations.
+        tokenizer: A tokenizer instance for encoding and decoding text to and from token representations.
     """
         
-    def __init__(self, model_name: str = "gpt-3.5-turbo-0125", api_key: str = None):
+    DEFAULT_MODEL_KWARGS: dict = dict(max_tokens  = 300,
+                                      temperature = 0)
+
+    def __init__(self,
+                 model_name: str = "gpt-3.5-turbo-0125",
+                 model_kwargs: dict = DEFAULT_MODEL_KWARGS,
+                 api_key: str = None):
         """
         Initializes the OpenAI model provider with a specific model and API key.
 
         Args:
             model_name (str): The name of the OpenAI model to use. Defaults to 'gpt-3.5-turbo-0125'.
+            model_kwargs (dict): Model configuration. Defaults to {max_tokens: 300, temperature: 0}.
             api_key (str, optional): The API key for OpenAI. If not provided, attempts to use OPENAI_API_KEY from environment variables.
         
         Raises:
@@ -38,6 +45,7 @@ class OpenAI(ModelProvider):
             raise ValueError("Either api_key must be supplied with init, or OPENAI_API_KEY must be in env. Used for evaluation model")
 
         self.model_name = model_name
+        self.model_kwargs = model_kwargs
         self.api_key = api_key or os.getenv('OPENAI_API_KEY')
         self.model = AsyncOpenAI(api_key=self.api_key)
         self.tokenizer = tiktoken.encoding_for_model(self.model_name)
@@ -55,8 +63,7 @@ class OpenAI(ModelProvider):
         response = await self.model.chat.completions.create(
                 model=self.model_name,
                 messages=prompt,
-                max_tokens=300,
-                temperature=0
+                **self.model_kwargs
             )
         return response.choices[0].message.content
     
