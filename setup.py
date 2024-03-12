@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='niah-llm-test',
+    name='needlehaystack',
     version='0.0.1',
     author='Greg Kamradt',
     author_email='greg@gregkamradt.com',

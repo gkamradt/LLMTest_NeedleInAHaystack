@@ -4,9 +4,9 @@ from typing import Optional
 from dotenv import load_dotenv
 from jsonargparse import CLI
 
-from niah_llm_test import LLMNeedleHaystackTester, LLMMultiNeedleHaystackTester
-from niah_llm_test.evaluators import Evaluator, LangSmithEvaluator, OpenAIEvaluator
-from niah_llm_test.providers import Anthropic, ModelProvider, OpenAI
+from needlehaystack import LLMNeedleHaystackTester, LLMMultiNeedleHaystackTester
+from needlehaystack.evaluators import Evaluator, LangSmithEvaluator, OpenAIEvaluator
+from needlehaystack.providers import Anthropic, ModelProvider, OpenAI
 
 load_dotenv()
 
@@ -17,7 +17,7 @@ class CommandArgs():
     model_name: str = "gpt-3.5-turbo-0125"
     evaluator_model_name: Optional[str] = "gpt-3.5-turbo-0125"
     needle: Optional[str] = "\nThe best thing to do in San Francisco is eat a sandwich and sit in Dolores Park on a sunny day.\n"
-    haystack_dir: Optional[str] = "niah_llm_test/PaulGrahamEssays"
+    haystack_dir: Optional[str] = "needlehaystack/PaulGrahamEssays"
     retrieval_question: Optional[str] = "What is the best thing to do in San Francisco?"
     results_version: Optional[int] = 1
     context_lengths_min: Optional[int] = 1000

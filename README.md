@@ -10,32 +10,34 @@ Get the behind the scenes on the [overview video](https://youtu.be/KwRRuiCCdmc).
 
 ## Getting Started
 
-### Using the PyPi Package 
+### Setup Virtual Environment
 
-Install the package from PyPi:
 ```zsh
 python3 -m venv venv
 source venv/bin/activate
-pip install niah-llm-test
 ```
 
-Start using the package, referring to the example code of [main.py](./main.py).
+### Install and Use Package
+
+Install the package from PyPi:
+
+```zsh
+pip install needlehaystack
+```
+
+Start using the package by referring to the example code in [main.py](./main.py).
 
 ### For Developers
 
-Clone the repository and run the following from the repository root.
+1. Clone the repository.
+2. Create and activate the virtual environment as described above.
+3. Install the package in editable mode from the repository root:
 
 ```zsh
-python3 -m venv venv
-source venv/bin/activate
 pip install -e .
 ```
 
-The last command from the above, installs the package in an editable mode.
-
-Make changes and test them out on local. The package `niah_llm_test` is available for import.
-
-
+The package `needlehaystack` is available for import in your test cases. Develop, make changes and test locally.
 
 You can then run the analysis on OpenAI or Anthropic models by running `main.py` with the command line arguments shown below. `LLMNeedleHaystackTester` parameters can also be passed as command line arguments, except `model_to_test` and `evaluator` of course.
 

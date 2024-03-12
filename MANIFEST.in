@@ -1,2 +1,2 @@
-include niah_llm_test/PaulGrahamEssays/*
-include niah_llm_test/providers/Anthropic_prompt.txt
+include needlehaystack/PaulGrahamEssays/*
+include needlehaystack/providers/Anthropic_prompt.txt
