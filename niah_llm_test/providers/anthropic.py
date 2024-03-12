@@ -1,4 +1,6 @@
 import os
+import pkg_resources
+
 from operator import itemgetter
 from typing import Optional
 
@@ -22,7 +24,7 @@ class Anthropic(ModelProvider):
         """
 
         if "claude" not in model_name:
-            raise ValueError("If the model provider is 'Anthropic', the model name must include 'claude'. See https://docs.anthropic.com/claude/reference/selecting-a-model for more details on Anthropic models")
+            raise ValueError("If the model provider is 'anthropic', the model name must include 'claude'. See https://docs.anthropic.com/claude/reference/selecting-a-model for more details on Anthropic models")
         
         api_key = os.getenv('NIAH_API_KEY')
         if (not api_key):
@@ -35,9 +37,11 @@ class Anthropic(ModelProvider):
         self.model = AsyncAnthropic(api_key=self.api_key)
         self.tokenizer = AnthropicModel().get_tokenizer()
 
+        resource_path = pkg_resources.resource_filename('niah_llm_test', 'providers/Anthropic_prompt.txt')
+
         # Generate the prompt structure for the Anthropic model
         # Replace the following file with the appropriate prompt structure
-        with open('Anthropic_prompt.txt', 'r') as file:
+        with open(resource_path, 'r') as file:
             self.prompt_structure = file.read()
 
     async def evaluate_model(self, prompt: str) -> str:

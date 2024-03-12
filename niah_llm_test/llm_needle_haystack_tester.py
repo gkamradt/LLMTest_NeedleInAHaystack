@@ -4,6 +4,8 @@ import json
 import os
 import time
 
+import numpy as np
+
 from .evaluators import Evaluator
 from .providers import ModelProvider
 

@@ -6,6 +6,8 @@ import time
 from asyncio import Semaphore
 from datetime import datetime, timezone
 
+import numpy as np
+
 from .evaluators import Evaluator
 from .llm_needle_haystack_tester import LLMNeedleHaystackTester
 from .providers import ModelProvider
