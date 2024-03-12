@@ -32,12 +32,12 @@ def score_relevance(run: Run, example: Union[Example, None] = None):
     reference = example.outputs["answer"]
 
     # Grade prompt 
-    template = """You are a grader grading a student response relative to a reference. \n 
-            The reference is a list of elements. The grade is the number of correctly returned \n 
-            elements. For example, if the reference has 5 elements and the student returns 3, \n
-            then the grade is 3. 
+    template = """You are an expert grader of student answers relative to a reference answer. \n 
+            The reference answer is a single ingredient or a list of ingredients related to pizza \n 
+            toppings. The grade is the number of correctly returned ingredient relative to the reference. \n 
+            For example, if the reference has 5 ingredients and the student returns 3, then the grade is 3. \n
             Here is the student answer: \n --- --- --- \n {answer}
-            Here is the reference question: \n --- --- --- \n {reference}"""
+            Here is the reference answer: \n --- --- --- \n {reference}"""
     # Prompt 
     prompt = PromptTemplate(
             template=template,
@@ -92,7 +92,7 @@ class LangSmithEvaluator():
         """
         self.api_key = api_key
 
-    def evaluate_chain(self, chain, context_length, depth_percent, model_name, eval_set):
+    def evaluate_chain(self, chain, context_length, depth_percent, model_name, eval_set, num_needles, needles, insertion_percentages):
         """
         Evaluates a language model's chain of operations, specifically focusing on the model's ability to 
         retrieve information accurately from a given context. This method defines a custom evaluator that
@@ -104,6 +104,10 @@ class LangSmithEvaluator():
             depth_percent (float): The percentage depth in the context where the information (needle) is located.
             model_name (str): The name of the language model being evaluated.
             eval_set (str): The evaluation set identifier, used to categorize and reference the evaluation.
+            num_needles (int): The number of needles in the haystack. 
+            needles (list[str]): The needles inserted into the haystack. 
+            insertion_percentages (list[float]): The location of each needle in the haystack. 
+
 
         Details:
             The evaluation involves creating a grading prompt that asks the model to grade student responses
@@ -123,6 +127,9 @@ class LangSmithEvaluator():
             llm_or_chain_factory=chain,
             project_metadata={"context_length": context_length, 
                             "depth_percent": depth_percent, 
+                            "num_needles": num_needles,
+                            "needles": needles,
+                            "insertion_percentages": insertion_percentages,
                             "model_name": model_name},
             evaluation=evaluation_config,
             project_name=f"{context_length}-{depth_percent}--{model_name}--{project_name}--{run_id}",

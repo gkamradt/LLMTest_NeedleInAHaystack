@@ -82,10 +82,16 @@ class Anthropic(ModelProvider):
                 - Execute the runnable with these parameters to get the model's response.
         """
 
-        template = """You are a helpful AI bot that answers questions for a user given the context provided.\n 
-        Keep your response short and direct. Don't give information outside the document or repeat your findings. Here is your context: 
-        \n ------- \n {context} \n ------- \n
-        Here is the user question: \n --- --- --- \n {question}"""
+        template = """Human: You are a helpful AI bot that answers questions for a user. Keep your response short and direct" \n
+        <document_content>
+        {context} 
+        </document_content>
+        Here is the user question:
+        <question>
+         {question}
+        </question>
+        Don't give information outside the document or repeat your findings.
+        Assistant: Here is the most relevant information in the documents:"""
         
         prompt = PromptTemplate(
             template=template,
