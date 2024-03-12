@@ -17,6 +17,7 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
         super().__init__(*args, **kwargs)
         self.needles = needles
         self.eval_set = eval_set
+        self.insertion_percentages = []
 
     async def insert_needles(self, context, depth_percent, context_length):
         """
@@ -55,15 +56,27 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
         # To evenly distribute the needles, we calculate the intervals they need to be inserted.
         depth_percent_interval = (100 - depth_percent) / len(self.needles)
         
+        # Reset the insertion percentages list for the current context
+        self.insertion_percentages = []
+
         # Insert needles at calculated points
         for needle in self.needles:
+
             tokens_needle = self.model_to_test.encode_text_to_tokens(needle)
-            # Insert each needle at its corresponding depth percentage
-            # For simplicity, evenly distribute needles throughout the context
-            insertion_point = int(len(tokens_context) * (depth_percent / 100))
-            tokens_context = tokens_context[:insertion_point] + tokens_needle + tokens_context[insertion_point:]
-            # Adjust depth for next needle
-            depth_percent += depth_percent_interval  
+
+            if depth_percent == 100:
+                # If your depth percent is 100 (which means your needle is the last thing in the doc), throw it at the end
+                tokens_context = tokens_context + tokens_needle
+            else:
+                tokens_context, insertion_point = self.get_tokens_new_context(tokens_context, tokens_needle, depth_percent)
+
+                # Log 
+                insertion_percentage = (insertion_point / len(tokens_context)) * 100
+                self.insertion_percentages.append(insertion_percentage)
+                # print(f"Inserted '{needle}' at {insertion_percentage:.2f}% of the context, total length now: {len(tokens_context)} tokens")
+                
+                # Adjust depth for next needle
+                depth_percent += depth_percent_interval  
 
         new_context = self.model_to_test.decode_tokens(tokens_context)
         return new_context
@@ -100,10 +113,10 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
         context = await self.generate_context(context_length, depth_percent)
 
         # LangSmith
-        ## TODO: Support for many evaluators 
+        ## TODO: Support for other evaluators 
         if self.evaluation_model.__class__.__name__ == "LangSmithEvaluator":
             chain = self.model_to_test.get_langchain_runnable(context)
-            self.evaluation_model.evaluate_chain(chain, context_length, depth_percent, self.model_name, self.eval_set)
+            self.evaluation_model.evaluate_chain(chain, context_length, depth_percent, self.model_to_test.model_name, self.eval_set, len(self.needles), self.needles, self.insertion_percentages)
         else:
             await super().evaluate_and_log(context, context_length, depth_percent)
 
@@ -113,5 +126,5 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
         print (f"- Model: {self.model_name}")
         print (f"- Context Lengths: {len(self.context_lengths)}, Min: {min(self.context_lengths)}, Max: {max(self.context_lengths)}")
         print (f"- Document Depths: {len(self.document_depth_percents)}, Min: {min(self.document_depth_percents)}%, Max: {max(self.document_depth_percents)}%")
-        print (f"- Needles: {[needle.strip() for needle in self.needles]}")
+        print (f"- Needles: {self.needles}")
         print ("\n\n")

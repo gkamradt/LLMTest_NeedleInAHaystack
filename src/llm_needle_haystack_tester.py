@@ -253,31 +253,36 @@ class LLMNeedleHaystackTester:
         if len(tokens_context) + len(tokens_needle) > context_length:
             tokens_context = tokens_context[:context_length - len(tokens_needle)]
 
-        if depth_percent == 100:
-            # If your depth percent is 100 (which means your needle is the last thing in the doc), throw it at the end
-            tokens_new_context = tokens_context + tokens_needle
-        else:
-            # Go get the position (in terms of tokens) to insert your needle
-            insertion_point = int(len(tokens_context) * (depth_percent / 100))
-
-            # tokens_new_context represents the tokens before the needle
-            tokens_new_context = tokens_context[:insertion_point]
-
-            # We want to make sure that we place our needle at a sentence break so we first see what token a '.' is
-            period_tokens = self.model_to_test.encode_text_to_tokens('.')
-            
-            # Then we iteration backwards until we find the first period
-            while tokens_new_context and tokens_new_context[-1] not in period_tokens:
-                insertion_point -= 1
-                tokens_new_context = tokens_context[:insertion_point]
-
-            # Once we get there, then add in your needle, and stick the rest of your context in on the other end.
-            # Now we have a needle in a haystack
-            tokens_new_context += tokens_needle + tokens_context[insertion_point:]
+        tokens_new_context, _ = self.get_tokens_new_context(tokens_context, tokens_needle, depth_percent)
 
         # Convert back to a string and return it
         new_context = self.model_to_test.decode_tokens(tokens_new_context)
         return new_context
+
+    def get_tokens_new_context(self, tokens_context, tokens_needle, depth_percent):
+        if depth_percent == 100:
+            # If your depth percent is 100 (which means your needle is the last thing in the doc), throw it at the end
+            return tokens_context + tokens_needle
+        
+        # Go get the position (in terms of tokens) to insert your needle
+        insertion_point = int(len(tokens_context) * (depth_percent / 100))
+
+        # tokens_new_context represents the tokens before the needle
+        tokens_new_context = tokens_context[:insertion_point]
+
+        # We want to make sure that we place our needle at a sentence break so we first see what token a '.' is
+        period_tokens = self.model_to_test.encode_text_to_tokens('.')
+        
+        # Then we iteration backwards until we find the first period
+        while tokens_new_context and tokens_new_context[-1] not in period_tokens:
+            insertion_point -= 1
+            tokens_new_context = tokens_context[:insertion_point]
+
+        # Once we get there, then add in your needle, and stick the rest of your context in on the other end.
+        # Now we have a needle in a haystack
+        tokens_new_context += tokens_needle + tokens_context[insertion_point:]
+
+        return tokens_new_context, insertion_point
 
     def get_context_length_in_tokens(self, context):
         return len(self.model_to_test.encode_text_to_tokens(context))

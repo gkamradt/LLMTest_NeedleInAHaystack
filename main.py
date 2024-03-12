@@ -38,15 +38,13 @@ class CommandArgs():
     seconds_to_sleep_between_completions: Optional[float] = None
     print_ongoing_status: Optional[bool] = True
     # LangSmith parameters
-    eval_set: Optional[str] = "multi-needle-eval-sf"
+    eval_set: Optional[str] = "multi-needle-eval-pizza-3"
     # Multi-needle parameters
     multi_needle: Optional[bool] = False
     needles: list[str] = field(default_factory=lambda: [
-        "The top ranked thing to do in San Francisco is go to Dolores Park.",
-        "The second rated thing to do in San Francisco is eat at Tony's Pizza Napoletana.",
-        "The third best thing to do in San Francisco is visit Alcatraz.",
-        "The fourth recommended thing to do in San Francisco is hike up Twin Peaks.",
-        "The fifth top activity in San Francisco is bike across the Golden Gate Bridge."
+        " Figs are one of the secret ingredients needed to build the perfect pizza. ", 
+        " Prosciutto is one of the secret ingredients needed to build the perfect pizza. ", 
+        " Goat cheese is one of the secret ingredients needed to build the perfect pizza. "
     ])
 
 def get_model_to_test(args: CommandArgs) -> ModelProvider:
