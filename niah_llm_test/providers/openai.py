@@ -17,7 +17,6 @@ class OpenAI(ModelProvider):
 
     Attributes:
         model_name (str): The name of the OpenAI model to use for evaluations and interactions.
-        api_key (str): The API key for accessing OpenAI services.
         model (AsyncOpenAI): An instance of the AsyncOpenAI client for asynchronous API calls.
         tokenizer: A tokenizer instance for encoding and decoding text to and from token representations.
     """
@@ -27,26 +26,24 @@ class OpenAI(ModelProvider):
 
     def __init__(self,
                  model_name: str = "gpt-3.5-turbo-0125",
-                 model_kwargs: dict = DEFAULT_MODEL_KWARGS,
-                 api_key: str = None):
+                 model_kwargs: dict = DEFAULT_MODEL_KWARGS):
         """
-        Initializes the OpenAI model provider with a specific model and API key.
+        Initializes the OpenAI model provider with a specific model.
 
         Args:
             model_name (str): The name of the OpenAI model to use. Defaults to 'gpt-3.5-turbo-0125'.
             model_kwargs (dict): Model configuration. Defaults to {max_tokens: 300, temperature: 0}.
-            api_key (str, optional): The API key for OpenAI. If not provided, attempts to use OPENAI_API_KEY from environment variables.
         
         Raises:
-            ValueError: If neither api_key is provided nor OPENAI_API_KEY is found in the environment.
+            ValueError: If NIAH_API_KEY is not found in the environment.
         """
-        
-        if (api_key is None) and (not os.getenv('OPENAI_API_KEY')):
-            raise ValueError("Either api_key must be supplied with init, or OPENAI_API_KEY must be in env. Used for evaluation model")
+        api_key = os.getenv('NIAH_API_KEY')
+        if (not api_key):
+            raise ValueError("NIAH_API_KEY must be in env.")
 
         self.model_name = model_name
         self.model_kwargs = model_kwargs
-        self.api_key = api_key or os.getenv('OPENAI_API_KEY')
+        self.api_key = api_key
         self.model = AsyncOpenAI(api_key=self.api_key)
         self.tokenizer = tiktoken.encoding_for_model(self.model_name)
     

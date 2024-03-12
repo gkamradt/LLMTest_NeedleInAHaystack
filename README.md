@@ -21,8 +21,10 @@ You can then run the analysis on OpenAI or Anthropic models by running `main.py`
 * `evaluator` - The evaluator, which can either be a `model` or `LangSmith`. See more on `LangSmith` below. If using a `model`, only `openai` is currently supported. Defaults to `openai`.
 * `model_name` - Model name of the language model accessible by the provider. Defaults to `gpt-3.5-turbo-0125`
 * `evaluator_model_name` - Model name of the language model accessible by the evaluator. Defaults to `gpt-3.5-turbo-0125`
-* `api_key` - API key for either OpenAI or Anthropic provider. Can either be passed as a command line argument or an environment variable named `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` depending on the provider. Defaults to `None`.
-* `evaluator_api_key` - API key for OpenAI provider. Can either be passed as a command line argument or an environment variable named `OPENAI_API_KEY`. Defaults to `None`
+
+### Environment Variables
+* `NIAH_API_KEY` - API key for interacting with the model. Depending on the provider, this gets used appropriately with the correct sdk.
+* `EVALUATOR_API_KEY` - API key to use if `openai` evaluation strategy is used.
 
 ## The Test
 1. Place a random fact or statement (the 'needle') in the middle of a long context window (the 'haystack')
@@ -63,7 +65,6 @@ I've put the results from the original tests in `/original_results`. I've upgrad
 * `needles` - List of needles to insert in the context
 
 Other Parameters:
-* `api_key` - API key for either OpenAI or Anthropic provider. Can either be passed when creating the object or an environment variable
 * `model_name` - The name of the model you'd like to use. Should match the exact value which needs to be passed to the api. Ex: For OpenAI inference and evaluator models it would be `gpt-3.5-turbo-0125`.
 
 ## Results Visualization
