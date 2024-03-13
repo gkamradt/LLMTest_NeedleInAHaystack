@@ -79,18 +79,6 @@ class LangSmithEvaluator():
     from a provided context (the "needle" in a "haystack").
     """
 
-    def __init__(self, api_key: str = None):
-        """
-        Initializes the LangSmithEvaluator with API key for evaluator model, if needed.
-
-        Args:
-            api_key (str, optional): The API key for authenticating evaluator model.
-        """
-        if (api_key is None) and (not os.getenv('LANGCHAIN_API_KEY')):
-            raise ValueError("Either api_key must be supplied with init, or LANGCHAIN_API_KEY must be in env. Used for evaluation model")
-        
-        self.api_key = api_key or os.getenv('LANGCHAIN_API_KEY')
-
     def evaluate_chain(self, chain, context_length, depth_percent, model_name, eval_set, num_needles, needles, insertion_percentages):
         """
         Evaluates a language model's chain of operations, specifically focusing on the model's ability to 
