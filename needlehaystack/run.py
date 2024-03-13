@@ -4,9 +4,9 @@ from typing import Optional
 from dotenv import load_dotenv
 from jsonargparse import CLI
 
-from needlehaystack import LLMNeedleHaystackTester, LLMMultiNeedleHaystackTester
-from needlehaystack.evaluators import Evaluator, LangSmithEvaluator, OpenAIEvaluator
-from needlehaystack.providers import Anthropic, ModelProvider, OpenAI
+from . import LLMNeedleHaystackTester, LLMMultiNeedleHaystackTester
+from .evaluators import Evaluator, LangSmithEvaluator, OpenAIEvaluator
+from .providers import Anthropic, ModelProvider, OpenAI
 
 load_dotenv()
 
@@ -95,13 +95,6 @@ def main():
     
     It parses the command line arguments, selects the appropriate model provider and evaluator,
     and initiates the testing process either for single-needle or multi-needle scenarios.
-
-    Example usage:
-    python main.py --evaluator langsmith --context_lengths_num_intervals 3 --document_depth_percent_intervals 3 
-    --provider openai --model_name "gpt-4-0125-preview" --multi_needle True --eval_set multi-needle-eval-pizza
-    --needles '["Figs are one of the three most delicious pizza toppings.", 
-    "Prosciutto is one of the three most delicious pizza toppings.", 
-    "Goat cheese is one of the three most delicious pizza toppings."]'
     """
     args = CLI(CommandArgs, as_positional=False)
     args.model_to_test = get_model_to_test(args)

@@ -8,9 +8,21 @@ Get the behind the scenes on the [overview video](https://youtu.be/KwRRuiCCdmc).
 
 ![GPT-4-128 Context Testing](img/NeedleHaystackCodeSnippet.png)
 
+## The Test
+
+1. Place a random fact or statement (the 'needle') in the middle of a long context window (the 'haystack')
+2. Ask the model to retrieve this statement
+3. Iterate over various document depths (where the needle is placed) and context lengths to measure performance
+
+This is the code that backed [this OpenAI](https://twitter.com/GregKamradt/status/1722386725635580292) and [Anthropic analysis](https://twitter.com/GregKamradt/status/1727018183608193393).
+
+The results from the original tests are in `/original_results`. The script has upgraded a lot since those test were ran so the data formats may not match your script results.
+
 ## Getting Started
 
 ### Setup Virtual Environment
+
+We recommend setting up a virtual environment to isolate Python dependencies, ensuring project-specific packages without conflicting with system-wide installations.
 
 ```zsh
 python3 -m venv venv
@@ -22,7 +34,7 @@ source venv/bin/activate
 - `NIAH_MODEL_API_KEY` - API key for interacting with the model. Depending on the provider, this gets used appropriately with the correct sdk.
 - `NIAH_EVALUATOR_API_KEY` - API key to use if `openai` evaluation strategy is used.
 
-### Install and Use Package
+### Install Package
 
 Install the package from PyPi:
 
@@ -30,7 +42,32 @@ Install the package from PyPi:
 pip install needlehaystack
 ```
 
-Start using the package by referring to the example code in [main.py](./main.py).
+### Run Test
+
+Start using the package by calling the entry point `needlehaystack.run_test` from command line.
+
+You can then run the analysis on OpenAI or Anthropic models with the following command line arguments:
+
+- `provider` - The provider of the model, available options are `openai` and `anthropic`. Defaults to `openai`
+- `evaluator` - The evaluator, which can either be a `model` or `LangSmith`. See more on `LangSmith` below. If using a `model`, only `openai` is currently supported. Defaults to `openai`.
+- `model_name` - Model name of the language model accessible by the provider. Defaults to `gpt-3.5-turbo-0125`
+- `evaluator_model_name` - Model name of the language model accessible by the evaluator. Defaults to `gpt-3.5-turbo-0125`
+
+Additionally, `LLMNeedleHaystackTester` parameters can also be passed as command line arguments, except `model_to_test` and `evaluator`.
+
+Here are some example use cases.
+
+Following command runs the test for openai model `gpt-3.5-turbo-0125` for a single context length of 2000 and single document depth of 50%.
+
+```zsh
+needlehaystack.run_test --provider openai --model_name "gpt-3.5-turbo-0125" --document_depth_percents "[50]" --context_lengths "[2000]"
+```
+
+Following command runs the test for anthropic model `claude-2.1` for a single context length of 2000 and single document depth of 50%.
+
+```zsh
+needlehaystack.run_test --provider anthropic --model_name "claude-2.1" --document_depth_percents "[50]" --context_lengths "[2000]"
+```
 
 ### For Contributors
 
@@ -45,39 +82,7 @@ pip install -e .
 
 The package `needlehaystack` is available for import in your test cases. Develop, make changes and test locally.
 
-You can then run the analysis on OpenAI or Anthropic models by running `main.py` with the command line arguments shown below.
-
-- `provider` - The provider of the model, available options are `openai` and `anthropic`. Defaults to `openai`
-- `evaluator` - The evaluator, which can either be a `model` or `LangSmith`. See more on `LangSmith` below. If using a `model`, only `openai` is currently supported. Defaults to `openai`.
-- `model_name` - Model name of the language model accessible by the provider. Defaults to `gpt-3.5-turbo-0125`
-- `evaluator_model_name` - Model name of the language model accessible by the evaluator. Defaults to `gpt-3.5-turbo-0125`
-Additionally, `LLMNeedleHaystackTester` parameters can also be passed as command line arguments, except `model_to_test` and `evaluator`.
-
-Here are some example use cases.
-
-Following command runs the test for openai model `gpt-3.5-turbo-0125` for a single context length of 2000 and single document depth of 50%.
-```zsh
-python3 main.py --provider openai --model_name "gpt-3.5-turbo-0125" --document_depth_percents "[50]" --context_lengths "[2000]"
-```
-
-Following command runs the test for anthropic model `claude-2.1` for a single context length of 2000 and single document depth of 50%.
-```zsh
-python3 main.py --provider anthropic --model_name "claude-2.1" --document_depth_percents "[50]" --context_lengths "[2000]"
-```
-
-## The Test
-
-1. Place a random fact or statement (the 'needle') in the middle of a long context window (the 'haystack')
-2. Ask the model to retrieve this statement
-3. Iterate over various document depths (where the needle is placed) and context lengths to measure performance
-
-This is the code that backed [this OpenAI](https://twitter.com/GregKamradt/status/1722386725635580292) and [Anthropic analysis](https://twitter.com/GregKamradt/status/1727018183608193393).
-
-If ran and `save_results = True`, then this script will populate a `result/` directory with evaluation information. Due to potential concurrent requests each new test will be saved as a few file.
-
-I've put the results from the original tests in `/original_results`. I've upgraded the script since those test were ran so the data formats may not match your script results.
-
-`LLMNeedleHaystackTester` parameters:
+## `LLMNeedleHaystackTester` parameters:
 
 - `model_to_test` - The model to run the needle in a haystack test on. Default is None.
 - `evaluator` - An evaluator to evaluate the model's response. Default is None.
@@ -86,7 +91,7 @@ I've put the results from the original tests in `/original_results`. I've upgrad
 - `retrieval_question` - The question with which to retrieve your needle in the background context
 - `results_version` - You may want to run your test multiple times for the same combination of length/depth, change the version number if so
 - `num_concurrent_requests` - Default: 1. Set higher if you'd like to run more requests in parallel. Keep in mind rate limits.
-- `save_results` - Whether or not you'd like to save your results to file. They will be temporarily saved in the object regardless. True/False
+- `save_results` - Whether or not you'd like to save your results to file. They will be temporarily saved in the object regardless. True/False. If `save_results = True`, then this script will populate a `result/` directory with evaluation information. Due to potential concurrent requests each new test will be saved as a few file.
 - `save_contexts` - Whether or not you'd like to save your contexts to file. **Warning** these will get very long. True/False
 - `final_context_length_buffer` - The amount of context to take off each input to account for system messages and output tokens. This can be more intelligent but using a static value for now. Default 200 tokens.
 - `context_lengths_min` - The starting point of your context lengths list to iterate
@@ -178,7 +183,7 @@ https://smith.langchain.com/public/74d2af1c-333d-4a73-87bc-a837f8f0f65c/d
 Here is the command to run this using multi-needle eval and passing the relevant needles:
 
 ```
-python main.py --evaluator langsmith --context_lengths_num_intervals 3 --document_depth_percent_intervals 3 --provider openai --model_name "gpt-4-0125-preview" --multi_needle True --eval_set multi-needle-eval-pizza --needles '["Figs are one of the three most delicious pizza toppings.", "Prosciutto is one of the three most delicious pizza toppings.", "Goat cheese is one of the three most delicious pizza toppings."]'
+needlehaystack.run_test --evaluator langsmith --context_lengths_num_intervals 3 --document_depth_percent_intervals 3 --provider openai --model_name "gpt-4-0125-preview" --multi_needle True --eval_set multi-needle-eval-pizza --needles '["Figs are one of the three most delicious pizza toppings.", "Prosciutto is one of the three most delicious pizza toppings.", "Goat cheese is one of the three most delicious pizza toppings."]'
 ```
 
 ## License

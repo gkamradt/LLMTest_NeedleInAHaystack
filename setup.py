@@ -16,4 +16,9 @@ setup(
     ],
     python_requires='>=3.6',
     classifiers=[],
+    entry_points={
+        'console_scripts': [
+            'needlehaystack.run_test = needlehaystack.run:main',
+        ],
+    },
 )
