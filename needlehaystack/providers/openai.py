@@ -35,11 +35,11 @@ class OpenAI(ModelProvider):
             model_kwargs (dict): Model configuration. Defaults to {max_tokens: 300, temperature: 0}.
         
         Raises:
-            ValueError: If NIAH_API_KEY is not found in the environment.
+            ValueError: If NIAH_MODEL_API_KEY is not found in the environment.
         """
-        api_key = os.getenv('NIAH_API_KEY')
+        api_key = os.getenv('NIAH_MODEL_API_KEY')
         if (not api_key):
-            raise ValueError("NIAH_API_KEY must be in env.")
+            raise ValueError("NIAH_MODEL_API_KEY must be in env.")
 
         self.model_name = model_name
         self.model_kwargs = model_kwargs

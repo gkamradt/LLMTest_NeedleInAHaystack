@@ -26,9 +26,9 @@ class Anthropic(ModelProvider):
         if "claude" not in model_name:
             raise ValueError("If the model provider is 'anthropic', the model name must include 'claude'. See https://docs.anthropic.com/claude/reference/selecting-a-model for more details on Anthropic models")
         
-        api_key = os.getenv('NIAH_API_KEY')
+        api_key = os.getenv('NIAH_MODEL_API_KEY')
         if (not api_key):
-            raise ValueError("NIAH_API_KEY must be in env.")
+            raise ValueError("NIAH_MODEL_API_KEY must be in env.")
 
         self.model_name = model_name
         self.model_kwargs = model_kwargs

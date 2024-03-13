@@ -17,6 +17,11 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
+### Environment Variables
+
+- `NIAH_MODEL_API_KEY` - API key for interacting with the model. Depending on the provider, this gets used appropriately with the correct sdk.
+- `NIAH_EVALUATOR_API_KEY` - API key to use if `openai` evaluation strategy is used.
+
 ### Install and Use Package
 
 Install the package from PyPi:
@@ -45,11 +50,6 @@ You can then run the analysis on OpenAI or Anthropic models by running `main.py`
 - `evaluator` - The evaluator, which can either be a `model` or `LangSmith`. See more on `LangSmith` below. If using a `model`, only `openai` is currently supported. Defaults to `openai`.
 - `model_name` - Model name of the language model accessible by the provider. Defaults to `gpt-3.5-turbo-0125`
 - `evaluator_model_name` - Model name of the language model accessible by the evaluator. Defaults to `gpt-3.5-turbo-0125`
-
-### Environment Variables
-
-- `NIAH_API_KEY` - API key for interacting with the model. Depending on the provider, this gets used appropriately with the correct sdk.
-- `EVALUATOR_API_KEY` - API key to use if `openai` evaluation strategy is used.
 
 ## The Test
 
