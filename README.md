@@ -32,12 +32,12 @@ pip install needlehaystack
 
 Start using the package by referring to the example code in [main.py](./main.py).
 
-### For Developers
+### For Contributors
 
-1. Clone the repository.
+1. Fork and clone the repository.
 2. Create and activate the virtual environment as described above.
-3. Set environment variables as described above.
-3. Install the package in editable mode from the repository root:
+3. Set the environment variables as described above.
+4. Install the package in editable mode by running the following command from repository root:
 
 ```zsh
 pip install -e .
@@ -45,12 +45,25 @@ pip install -e .
 
 The package `needlehaystack` is available for import in your test cases. Develop, make changes and test locally.
 
-You can then run the analysis on OpenAI or Anthropic models by running `main.py` with the command line arguments shown below. `LLMNeedleHaystackTester` parameters can also be passed as command line arguments, except `model_to_test` and `evaluator` of course.
+You can then run the analysis on OpenAI or Anthropic models by running `main.py` with the command line arguments shown below.
 
 - `provider` - The provider of the model, available options are `openai` and `anthropic`. Defaults to `openai`
 - `evaluator` - The evaluator, which can either be a `model` or `LangSmith`. See more on `LangSmith` below. If using a `model`, only `openai` is currently supported. Defaults to `openai`.
 - `model_name` - Model name of the language model accessible by the provider. Defaults to `gpt-3.5-turbo-0125`
 - `evaluator_model_name` - Model name of the language model accessible by the evaluator. Defaults to `gpt-3.5-turbo-0125`
+Additionally, `LLMNeedleHaystackTester` parameters can also be passed as command line arguments, except `model_to_test` and `evaluator`.
+
+Here are some example use cases.
+
+Following command runs the test for openai model `gpt-3.5-turbo-0125` for a single context length of 2000 and single document depth of 50%.
+```zsh
+python3 main.py --provider openai --model_name "gpt-3.5-turbo-0125" --document_depth_percents "[50]" --context_lengths "[2000]"
+```
+
+Following command runs the test for anthropic model `claude-2.1` for a single context length of 2000 and single document depth of 50%.
+```zsh
+python3 main.py --provider anthropic --model_name "claude-2.1" --document_depth_percents "[50]" --context_lengths "[2000]"
+```
 
 ## The Test
 
