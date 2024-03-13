@@ -36,6 +36,7 @@ Start using the package by referring to the example code in [main.py](./main.py)
 
 1. Clone the repository.
 2. Create and activate the virtual environment as described above.
+3. Set environment variables as described above.
 3. Install the package in editable mode from the repository root:
 
 ```zsh

@@ -37,7 +37,7 @@ class Anthropic(ModelProvider):
         self.model = AsyncAnthropic(api_key=self.api_key)
         self.tokenizer = AnthropicModel().get_tokenizer()
 
-        resource_path = pkg_resources.resource_filename('niah_llm_test', 'providers/Anthropic_prompt.txt')
+        resource_path = pkg_resources.resource_filename('needlehaystack', 'providers/Anthropic_prompt.txt')
 
         # Generate the prompt structure for the Anthropic model
         # Replace the following file with the appropriate prompt structure
