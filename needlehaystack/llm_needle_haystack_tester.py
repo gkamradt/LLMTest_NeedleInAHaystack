@@ -16,6 +16,11 @@ class LLMNeedleHaystackTester:
     """
     This class is used to test the LLM Needle Haystack.
     """
+
+    CONTEXT_DIR = 'contexts'
+    RESULTS_DIR = 'results'
+    RESULT_FILE_FORMAT = '{model_name}_len_{context_length}_depth_{depth_percent}'
+
     def __init__(self,
                  model_to_test: ModelProvider = None,
                  evaluator: Evaluator = None,
@@ -81,9 +86,6 @@ class LLMNeedleHaystackTester:
         self.seconds_to_sleep_between_completions = seconds_to_sleep_between_completions
         self.print_ongoing_status = print_ongoing_status
         
-        self.context_dir = 'contexts'
-        self.results_dir = 'results'
-        self.result_file_format = '{model_name}_len_{context_length}_depth_{depth_percent}'
         self.testing_results = []
 
         if context_lengths is None:
@@ -194,7 +196,7 @@ class LLMNeedleHaystackTester:
             self.print_status(test_elapsed_time, context_length, depth_percent, score, response)
 
         parsed_model_name = self.model_name.replace(".", "_")
-        context_file_location = self.result_file_format.format(model_name=parsed_model_name,
+        context_file_location = self.RESULT_FILE_FORMAT.format(model_name=parsed_model_name,
                                                                context_length=context_length,
                                                                depth_percent=int(depth_percent))
 
@@ -202,19 +204,19 @@ class LLMNeedleHaystackTester:
             results['file_name'] = context_file_location
 
             # Save the context to file for retesting
-            if not os.path.exists(self.context_dir):
-                os.makedirs(self.context_dir)
+            if not os.path.exists(self.CONTEXT_DIR):
+                os.makedirs(self.CONTEXT_DIR)
 
-            with open(f'{self.context_dir}/{context_file_location}_context.txt', 'w') as f:
+            with open(f'{self.CONTEXT_DIR}/{context_file_location}_context.txt', 'w') as f:
                 f.write(context)
             
         if self.save_results:
             # Save the context to file for retesting
-            if not os.path.exists(self.results_dir):
-                os.makedirs(self.results_dir)
+            if not os.path.exists(self.RESULTS_DIR):
+                os.makedirs(self.RESULTS_DIR)
 
             # Save the result to file for retesting
-            with open(f'{self.results_dir}/{context_file_location}_results.json', 'w') as f:
+            with open(f'{self.RESULTS_DIR}/{context_file_location}_results.json', 'w') as f:
                 json.dump(results, f)
 
         if self.seconds_to_sleep_between_completions:
@@ -225,13 +227,13 @@ class LLMNeedleHaystackTester:
         Checks to see if a result has already been evaluated or not
         """
 
-        if not os.path.exists(self.results_dir):
+        if not os.path.exists(self.RESULTS_DIR):
             return False
         
-        filename = self.result_file_format.format(model_name=self.model_name,
+        filename = self.RESULT_FILE_FORMAT.format(model_name=self.model_name,
                                                   context_length=context_length,
                                                   depth_percent=depth_percent)
-        file_path = os.path.join(self.results_dir, f'{filename}.json')
+        file_path = os.path.join(self.RESULTS_DIR, f'{filename}.json')
         if not os.path.exists(file_path):
             return False
         
