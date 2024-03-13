@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='needlehaystack',
-    version='0.0.2',
+    version='0.1.0',
     author='Greg Kamradt',
     author_email='greg@gregkamradt.com',
     description='Doing simple retrieval from LLM models at various context lengths to measure accuracy.',
