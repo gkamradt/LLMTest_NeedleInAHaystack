@@ -1,4 +1,3 @@
-
 import os
 
 from .evaluator import Evaluator
@@ -19,13 +18,11 @@ class OpenAIEvaluator(Evaluator):
     def __init__(self,
                  model_name: str = "gpt-3.5-turbo-0125",
                  model_kwargs: dict = DEFAULT_MODEL_KWARGS,
-                 api_key: str = None,
                  true_answer: str = None,
                  question_asked: str = None,):
         """
         :param model_name: The name of the model.
         :param model_kwargs: Model configuration. Default is {temperature: 0}
-        :param api_key: The API key for OpenAI. Default is None.
         :param true_answer: The true answer to the question asked.
         :param question_asked: The question asked to the model.
         """
@@ -38,11 +35,12 @@ class OpenAIEvaluator(Evaluator):
         self.true_answer = true_answer
         self.question_asked = question_asked
 
-        if (api_key is None) and (not os.getenv('OPENAI_API_KEY')):
-            raise ValueError("Either api_key must be supplied with init, or OPENAI_API_KEY must be in env. Used for evaluation model")
-        
-        self.api_key = api_key or os.getenv('OPENAI_API_KEY')
+        api_key = os.getenv('NIAH_EVALUATOR_API_KEY')
+        if (not api_key):
+            raise ValueError("NIAH_EVALUATOR_API_KEY must be in env for using openai evaluator.")
 
+        self.api_key = api_key
+        
         self.evaluator = ChatOpenAI(model=self.model_name,
                                     openai_api_key=self.api_key,
                                     **self.model_kwargs)
