@@ -284,9 +284,10 @@ class LLMNeedleHaystackTester:
     def read_context_files(self):
         context = ""
         max_context_length = max(self.context_lengths)
+        base_dir = os.path.abspath(os.path.dirname(__file__))  # Package directory
 
         while self.get_context_length_in_tokens(context) < max_context_length:
-            for file in glob.glob(f"{self.haystack_dir}/*.txt"):
+            for file in glob.glob(os.path.join(base_dir, self.haystack_dir, "*.txt")):
                 with open(file, 'r') as f:
                     context += f.read()
         return context
