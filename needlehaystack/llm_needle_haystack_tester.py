@@ -1,9 +1,10 @@
 import asyncio
 import glob
 import json
-import numpy as np
 import os
 import time
+
+import numpy as np
 
 from .evaluators import Evaluator
 from .providers import ModelProvider
@@ -299,9 +300,10 @@ class LLMNeedleHaystackTester:
         context = ""
         current_context_length = 0
         max_context_length = max(self.context_lengths)
+        base_dir = os.path.abspath(os.path.dirname(__file__))  # Package directory
 
         while current_context_length < max_context_length:
-            for file in glob.glob(f"{self.haystack_dir}/*.txt"):
+            for file in glob.glob(os.path.join(base_dir, self.haystack_dir, "*.txt")):
                 with open(file, 'r') as f:
                     file_content = f.read()
 

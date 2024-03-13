@@ -1,0 +1,2 @@
+include needlehaystack/PaulGrahamEssays/*
+include needlehaystack/providers/Anthropic_prompt.txt
