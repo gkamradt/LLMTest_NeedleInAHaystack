@@ -6,7 +6,7 @@ from jsonargparse import CLI
 
 from . import LLMNeedleHaystackTester, LLMMultiNeedleHaystackTester
 from .evaluators import Evaluator, LangSmithEvaluator, OpenAIEvaluator
-from .providers import Anthropic, ModelProvider, OpenAI
+from .providers import Anthropic, ModelProvider, OpenAI, Bedrock
 
 load_dotenv()
 
@@ -63,6 +63,8 @@ def get_model_to_test(args: CommandArgs) -> ModelProvider:
             return OpenAI(model_name=args.model_name)
         case "anthropic":
             return Anthropic(model_name=args.model_name)
+        case "bedrock":
+            return Bedrock(model_name=args.model_name)
         case _:
             raise ValueError(f"Invalid provider: {args.provider}")
 
