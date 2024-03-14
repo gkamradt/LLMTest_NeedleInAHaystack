@@ -21,7 +21,8 @@ class Bedrock(ModelProvider):
         :param model_kwargs: Model configuration. Default is {max_tokens: 300, temperature: 0}
         """
 
-        if "anthropic" not in model_name:
+        if "anthropic" not in model_name and \
+                "meta" not in model_name:
             raise NotImplementedError
 
         self.model_name = model_name
