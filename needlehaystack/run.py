@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from jsonargparse import CLI
 
 from . import LLMNeedleHaystackTester, LLMMultiNeedleHaystackTester
-from .evaluators import Evaluator, LangSmithEvaluator, OpenAIEvaluator
+from .evaluators import Evaluator, LangSmithEvaluator, OpenAIEvaluator, AzureOpenAIEvaluator
 from .providers import Anthropic, ModelProvider, OpenAI
 
 load_dotenv()
@@ -35,6 +35,9 @@ class CommandArgs():
     final_context_length_buffer: Optional[int] = 200
     seconds_to_sleep_between_completions: Optional[float] = None
     print_ongoing_status: Optional[bool] = True
+    # Azure OpenAI parameters
+    azure_openai_endpoint: Optional[str] = None
+    azure_openai_api_version: Optional[str] = "2024-02-01"
     # LangSmith parameters
     eval_set: Optional[str] = "multi-needle-eval-pizza-3"
     # Multi-needle parameters
@@ -84,6 +87,12 @@ def get_evaluator(args: CommandArgs) -> Evaluator:
             return OpenAIEvaluator(model_name=args.evaluator_model_name,
                                    question_asked=args.retrieval_question,
                                    true_answer=args.needle)
+        case "azure" | "azure_openai" | "aoai":
+            return AzureOpenAIEvaluator(model_name=args.evaluator_model_name,
+                                        question_asked=args.retrieval_question,
+                                        true_answer=args.needle,
+                                        azure_openai_endpoint=args.azure_openai_endpoint,
+                                        azure_openai_api_version=args.azure_openai_api_version)
         case "langsmith":
             return LangSmithEvaluator()
         case _:

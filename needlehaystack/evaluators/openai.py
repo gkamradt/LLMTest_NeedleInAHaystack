@@ -1,6 +1,5 @@
-import os
-
 from .evaluator import Evaluator
+from ..utils import get_from_env_or_error
 
 from langchain.evaluation import load_evaluator
 from langchain_community.chat_models import ChatOpenAI
@@ -35,11 +34,10 @@ class OpenAIEvaluator(Evaluator):
         self.true_answer = true_answer
         self.question_asked = question_asked
 
-        api_key = os.getenv('NIAH_EVALUATOR_API_KEY')
-        if (not api_key):
-            raise ValueError("NIAH_EVALUATOR_API_KEY must be in env for using openai evaluator.")
-
-        self.api_key = api_key
+        self.api_key = get_from_env_or_error(
+            env_key="NIAH_EVALUATOR_API_KEY",
+            error_message="{env_key} must be in env for using openai evaluator."
+        )
         
         self.evaluator = ChatOpenAI(model=self.model_name,
                                     openai_api_key=self.api_key,

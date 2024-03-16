@@ -1,14 +1,13 @@
-import os
-from operator import itemgetter
-from typing import Optional
-
-from openai import AsyncOpenAI
-from langchain_openai import ChatOpenAI  
-from langchain.prompts import PromptTemplate
 import tiktoken
 
 from .model import ModelProvider
+from ..utils import get_from_env_or_error
 
+from operator import itemgetter
+from typing import Optional
+from openai import AsyncOpenAI
+from langchain_openai import ChatOpenAI  
+from langchain.prompts import PromptTemplate
 
 class OpenAI(ModelProvider):
     """
@@ -37,13 +36,13 @@ class OpenAI(ModelProvider):
         Raises:
             ValueError: If NIAH_MODEL_API_KEY is not found in the environment.
         """
-        api_key = os.getenv('NIAH_MODEL_API_KEY')
-        if (not api_key):
-            raise ValueError("NIAH_MODEL_API_KEY must be in env.")
 
         self.model_name = model_name
         self.model_kwargs = model_kwargs
-        self.api_key = api_key
+        self.api_key = get_from_env_or_error(
+            env_key="NIAH_MODEL_API_KEY",
+            error_message="{env_key} must be in env for using OpenAI model."
+        )
         self.model = AsyncOpenAI(api_key=self.api_key)
         self.tokenizer = tiktoken.encoding_for_model(self.model_name)
     
