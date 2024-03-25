@@ -36,7 +36,7 @@ class LLMNeedleHaystackTester:
                  save_results = True,
                  results_dir = "results",
                  save_contexts = True,
-                 contexts_dir = "context"
+                 contexts_dir = "context",
                  final_context_length_buffer = 200,
                  seconds_to_sleep_between_completions = None,
                  print_ongoing_status = True,
