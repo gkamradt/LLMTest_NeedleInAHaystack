@@ -12,9 +12,9 @@ load_dotenv()
 
 @dataclass
 class CommandArgs():
-    provider: str = "databricks"
+    provider: str = "openai"
     evaluator: str = "openai"
-    model_name: str = "databricks-dbrx-chat"
+    model_name: str = "gpt-3.5-turbo-0125"
     evaluator_model_name: Optional[str] = "gpt-3.5-turbo-0125"
     needle: Optional[str] = "\nThe best thing to do in San Francisco is eat a sandwich and sit in Dolores Park on a sunny day.\n"
     haystack_dir: Optional[str] = "PaulGrahamEssays"

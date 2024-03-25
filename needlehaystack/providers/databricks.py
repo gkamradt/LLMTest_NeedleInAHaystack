@@ -25,15 +25,15 @@ class Databricks(OpenAI):
                                       temperature = 0)
 
     def __init__(self,
-                 base_url: str = "https://e2-dogfood.staging.cloud.databricks.com/serving-endpoints",
-                 model_name: str = "databricks-dbrx-chat",
+                 base_url: str,
+                 model_name: str,
                  model_kwargs:str = DEFAULT_MODEL_KWARGS):
         """
         Initializes the databricks foundation model provider with a specific model.
 
         Args:
             base_url (str): workspace URL where model endpoint is spun-up.
-            model_name (str): The name of the databricks foundation model to use for interactions. Defaults to 'databricks-dbrx-chat'.
+            model_name (str): The name of the databricks foundation model to use for interactions.
             model_kwargs (dict): Model configuration. Defaults to {max_tokens: 300, temperature: 0}.
 
         Raises:
