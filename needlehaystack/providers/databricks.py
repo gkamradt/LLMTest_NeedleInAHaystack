@@ -5,7 +5,7 @@ from typing import Optional
 from openai import AsyncOpenAI
 from langchain_openai import ChatOpenAI  
 from langchain.prompts import PromptTemplate
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer 
 
 from .openai import OpenAI
 
