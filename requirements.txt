@@ -42,6 +42,7 @@ SQLAlchemy==2.0.23
 tenacity==8.2.3
 tiktoken>=0.5.1
 tokenizers==0.15.0
+transformers>=4.39.0
 tqdm==4.66.1
 typing-inspect==0.9.0
 typing_extensions==4.8.0

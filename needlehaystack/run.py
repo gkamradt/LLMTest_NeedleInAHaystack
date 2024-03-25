@@ -6,27 +6,27 @@ from jsonargparse import CLI
 
 from . import LLMNeedleHaystackTester, LLMMultiNeedleHaystackTester
 from .evaluators import Evaluator, LangSmithEvaluator, OpenAIEvaluator
-from .providers import Anthropic, ModelProvider, OpenAI
+from .providers import Anthropic, ModelProvider, OpenAI, Databricks
 
 load_dotenv()
 
 @dataclass
 class CommandArgs():
-    provider: str = "openai"
+    provider: str = "databricks"
     evaluator: str = "openai"
-    model_name: str = "gpt-3.5-turbo-0125"
+    model_name: str = "databricks-dbrx-chat"
     evaluator_model_name: Optional[str] = "gpt-3.5-turbo-0125"
     needle: Optional[str] = "\nThe best thing to do in San Francisco is eat a sandwich and sit in Dolores Park on a sunny day.\n"
     haystack_dir: Optional[str] = "PaulGrahamEssays"
     retrieval_question: Optional[str] = "What is the best thing to do in San Francisco?"
     results_version: Optional[int] = 1
-    context_lengths_min: Optional[int] = 1000
-    context_lengths_max: Optional[int] = 16000
-    context_lengths_num_intervals: Optional[int] = 35
+    context_lengths_min: Optional[int] = 800
+    context_lengths_max: Optional[int] = 8100
+    context_lengths_num_intervals: Optional[int] = 10
     context_lengths: Optional[list[int]] = None
     document_depth_percent_min: Optional[int] = 0
     document_depth_percent_max: Optional[int] = 100
-    document_depth_percent_intervals: Optional[int] = 35
+    document_depth_percent_intervals: Optional[int] = 4
     document_depth_percents: Optional[list[int]] = None
     document_depth_percent_interval_type: Optional[str] = "linear"
     num_concurrent_requests: Optional[int] = 1
@@ -63,6 +63,8 @@ def get_model_to_test(args: CommandArgs) -> ModelProvider:
             return OpenAI(model_name=args.model_name)
         case "anthropic":
             return Anthropic(model_name=args.model_name)
+        case "databricks":
+            return Databricks(model_name=args.model_name)
         case _:
             raise ValueError(f"Invalid provider: {args.provider}")
 
