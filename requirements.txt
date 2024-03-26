@@ -6,6 +6,7 @@ anyio==3.7.1
 attrs==23.1.0
 certifi==2023.11.17
 charset-normalizer==3.3.2
+cohere>=5.1.2
 dataclasses-json==0.6.3
 distro==1.8.0
 filelock==3.13.1
@@ -21,10 +22,11 @@ jsonpatch==1.33
 jsonpointer==2.4
 langchain==0.1.9
 langchain-community>=0.0.24
-langchain-core==0.1.26
+langchain-core>=0.1.26
 langsmith>=0.1.8
 langchain_openai
 langchain_anthropic
+langchain_cohere
 marshmallow==3.20.1
 multidict==6.0.4
 mypy-extensions==1.0.0
