@@ -1,4 +1,4 @@
-from typing import Union
+import os
 import uuid
 
 from langchain_openai import ChatOpenAI  
@@ -12,7 +12,7 @@ from langsmith.evaluation import EvaluationResult, run_evaluator
 from langsmith.schemas import Example, Run
 
 @run_evaluator
-def score_relevance(run: Run, example: Union[Example, None] = None):
+def score_relevance(run: Run, example: Example | None = None):
     """
     A custom evaluator function that grades the language model's response based on its relevance
     to a reference answer.
@@ -24,10 +24,6 @@ def score_relevance(run: Run, example: Union[Example, None] = None):
     Returns:
         EvaluationResult: The result of the evaluation, containing the relevance score.
     """
-    
-    print("--LANGSMITH EVAL--")
-    #print("--MODEL: ", model_name)
-    #print("--EVAL SET: ", eval_set)
     student_answer = run.outputs["output"]
     reference = example.outputs["answer"]
 
