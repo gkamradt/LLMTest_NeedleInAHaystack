@@ -13,7 +13,7 @@ class OpenAIEvaluator(Evaluator):
                 Score 5: The answer has moderate relevance but contains inaccuracies.
                 Score 7: The answer aligns with the reference but has minor omissions.
                 Score 10: The answer is completely accurate and aligns perfectly with the reference.
-                Only respond with a numberical score"""}
+                Only respond with a numerical score"""}
 
     def __init__(self,
                  model_name: str = "gpt-3.5-turbo-0125",
