@@ -46,9 +46,9 @@ pip install needlehaystack
 
 Start using the package by calling the entry point `needlehaystack.run_test` from command line.
 
-You can then run the analysis on OpenAI or Anthropic models with the following command line arguments:
+You can then run the analysis on OpenAI, Anthropic, or HuggingFace models with the following command line arguments:
 
-- `provider` - The provider of the model, available options are `openai` and `anthropic`. Defaults to `openai`
+- `provider` - The provider of the model, available options are `openai`, `anthropic`, and `huggingface`. Defaults to `openai`
 - `evaluator` - The evaluator, which can either be a `model` or `LangSmith`. See more on `LangSmith` below. If using a `model`, only `openai` is currently supported. Defaults to `openai`.
 - `model_name` - Model name of the language model accessible by the provider. Defaults to `gpt-3.5-turbo-0125`
 - `evaluator_model_name` - Model name of the language model accessible by the evaluator. Defaults to `gpt-3.5-turbo-0125`
@@ -67,6 +67,12 @@ Following command runs the test for anthropic model `claude-2.1` for a single co
 
 ```zsh
 needlehaystack.run_test --provider anthropic --model_name "claude-2.1" --document_depth_percents "[50]" --context_lengths "[2000]"
+```
+
+Following command runs the test for anthropic model `mistralai/Mistral-7B-Instruct-v0.2` for a single context length of 2000 and single document depth of 50%.
+
+```zsh
+needlehaystack.run_test --provider huggingface --model_name "mistralai/Mistral-7B-Instruct-v0.2" --document_depth_percents "[50]" --context_lengths "[2000]"
 ```
 
 ### For Contributors
@@ -109,6 +115,7 @@ The package `needlehaystack` is available for import in your test cases. Develop
 `LLMMultiNeedleHaystackTester` parameters:
 
 - `multi_needle` - True or False, whether to run multi-needle
+- `multi_needle_type` - The type of needle insertion method
 - `needles` - List of needles to insert in the context
 
 Other Parameters:
@@ -127,9 +134,19 @@ Other Parameters:
 
 <img src="img/Claude_2_1_testing.png" alt="GPT-4-128 Context Testing" width="800"/>
 
+## MistralAI's Mistral-7B-Instruct-v0.2 (Run 03/22/2024)
+
+<img src="img/Mistral_Instruct_testing.png" alt="Mistral-Instruct Context Testing" width="800">
+
 ## Multi Needle Evaluator
 
 To enable multi-needle insertion into our context, use `--multi_needle True`.
+
+There are two ways to insert the needles into the haystack:
+- [depth_percent](#depth_percent)
+- [random](#random)
+
+### Depth_percent
 
 This inserts the first needle at the specified `depth_percent`, then evenly distributes subsequent needles through the remaining context after this depth.
 
@@ -156,6 +173,44 @@ Needle 7: 40 + 6 * 6 = 76
 Needle 8: 40 + 7 * 6 = 82
 Needle 9: 40 + 8 * 6 = 88
 Needle 10: 40 + 9 * 6 = 94
+```
+
+### Random
+
+This insertion methodology targets to not only preserve the randomness but also insert the needles evenly. The specific description of method as follows:
+
+1. Divide the entire context by the given number of needles to find the range to insert the needle.
+2. Insert needles randomly within the given range of each needle.
+
+To find the insertion range of each needles, it calculates as follows:
+
+```
+insertion_range = []
+num_needles = len(self.needles)
+range_interval = 100 / num_needles
+
+for i in range(num_needles):
+    insertion_range.append(range(i * range_interval, (i + 1) * range_interval))
+```
+
+In case of 10 needles, the first needle can be placed randomly in the range of [0, 10], the second at range of [10, 20], and so on.
+
+Following example shows the depth percents for the case of 10 needles.
+
+```
+num_needles = 10
+range_interval = 100 / 10 = 10
+
+Needle 1: [0, 10] -> random
+Needle 2: [10, 20] -> random
+Needle 3: [20, 30] -> random
+Needle 4: [30, 40] -> random
+Needle 5: [40, 50] -> random
+Needle 6: [50, 60] -> random
+Needle 7: [60, 70] -> random
+Needle 8: [70, 80] -> random
+Needle 9: [80, 90] -> random
+Needle 10: [90, 100] -> random
 ```
 
 ## LangSmith Evaluator
