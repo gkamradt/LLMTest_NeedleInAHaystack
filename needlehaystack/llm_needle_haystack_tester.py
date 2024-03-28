@@ -18,6 +18,7 @@ class LLMNeedleHaystackTester:
     """
     def __init__(self,
                  model_to_test: ModelProvider = None,
+                 provider: str = None,
                  evaluator: Evaluator = None,
                  needle = None,
                  haystack_dir = "PaulGrahamEssays",
@@ -68,6 +69,7 @@ class LLMNeedleHaystackTester:
         if not needle or not haystack_dir or not retrieval_question:
             raise ValueError("Needle, haystack, and retrieval_question must be provided.")
 
+        self.provider = provider
         self.needle = needle
         self.haystack_dir = haystack_dir
         self.retrieval_question = retrieval_question
@@ -182,7 +184,7 @@ class LLMNeedleHaystackTester:
             print (f"Score: {score}")
             print (f"Response: {response}\n")
 
-        context_file_location = f'{self.model_name.replace(".", "_")}_len_{context_length}_depth_{int(depth_percent*100)}'
+        context_file_location = f'{self.model_name.split("/")[-1].replace(".", "_")}_len_{context_length}_depth_{int(depth_percent*100)}'
 
         if self.save_contexts:
             results['file_name'] = context_file_location
@@ -242,8 +244,12 @@ class LLMNeedleHaystackTester:
         return context
     
     def insert_needle(self, context, depth_percent, context_length):
-        tokens_needle = self.model_to_test.encode_text_to_tokens(self.needle)
-        tokens_context = self.model_to_test.encode_text_to_tokens(context)
+        if self.provider == "huggingface":
+            tokens_needle = self.model_to_test.encode_text_to_tokens(self.needle, no_bos=True)
+            tokens_context = self.model_to_test.encode_text_to_tokens(context, no_bos=True)
+        else:
+            tokens_needle = self.model_to_test.encode_text_to_tokens(self.needle)
+            tokens_context = self.model_to_test.encode_text_to_tokens(context)
 
         # Reducing the context length by 150 buffer. This is to account for system message, the user question, and response.
         context_length -= self.final_context_length_buffer
@@ -279,7 +285,10 @@ class LLMNeedleHaystackTester:
         return new_context
 
     def get_context_length_in_tokens(self, context):
-        return len(self.model_to_test.encode_text_to_tokens(context))
+        if self.provider == "huggingface":
+            return len(self.model_to_test.encode_text_to_tokens(context, no_bos=True))
+        else:
+            return len(self.model_to_test.encode_text_to_tokens(context))
 
     def read_context_files(self):
         context = ""

@@ -1,3 +1,4 @@
+accelerate==0.28.0
 aiohttp==3.9.1
 aiosignal==1.3.1
 annotated-types==0.6.0
@@ -43,6 +44,7 @@ tenacity==8.2.3
 tiktoken>=0.5.1
 tokenizers==0.15.0
 tqdm==4.66.1
+transformers==4.39.1
 typing-inspect==0.9.0
 typing_extensions==4.8.0
 urllib3==2.1.0

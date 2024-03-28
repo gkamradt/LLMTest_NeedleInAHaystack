@@ -6,7 +6,7 @@ from jsonargparse import CLI
 
 from . import LLMNeedleHaystackTester, LLMMultiNeedleHaystackTester
 from .evaluators import Evaluator, LangSmithEvaluator, OpenAIEvaluator
-from .providers import Anthropic, ModelProvider, OpenAI
+from .providers import Anthropic, ModelProvider, OpenAI, HuggingFace
 
 load_dotenv()
 
@@ -39,6 +39,7 @@ class CommandArgs():
     eval_set: Optional[str] = "multi-needle-eval-pizza-3"
     # Multi-needle parameters
     multi_needle: Optional[bool] = False
+    multi_needle_type: Optional[str] = "depth_percent"
     needles: list[str] = field(default_factory=lambda: [
         " Figs are one of the secret ingredients needed to build the perfect pizza. ", 
         " Prosciutto is one of the secret ingredients needed to build the perfect pizza. ", 
@@ -63,6 +64,8 @@ def get_model_to_test(args: CommandArgs) -> ModelProvider:
             return OpenAI(model_name=args.model_name)
         case "anthropic":
             return Anthropic(model_name=args.model_name)
+        case "huggingface":
+            return HuggingFace(model_name=args.model_name)
         case _:
             raise ValueError(f"Invalid provider: {args.provider}")
 

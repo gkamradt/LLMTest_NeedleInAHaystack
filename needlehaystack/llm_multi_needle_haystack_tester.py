@@ -3,6 +3,7 @@ import glob
 import json
 import os
 import time
+import random
 from asyncio import Semaphore
 from datetime import datetime, timezone
 
@@ -26,13 +27,19 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
     """
     def __init__(self, *args, 
                  needles=[], 
+                 provider: str = None,
                  model_to_test: ModelProvider = None,
                  evaluator: Evaluator = None, 
                  print_ongoing_status = True,
                  eval_set = "multi-needle-eval-sf",
+                 multi_needle_type = "depth_percent",
                  **kwargs):
 
+        if multi_needle_type not in ["depth_percent", "random"]:
+            raise ValueError("Invalid multi_needle_type")
+
         super().__init__(*args, model_to_test=model_to_test, **kwargs)
+        self.provider = provider
         self.needles = needles
         self.evaluator = evaluator
         self.model_to_test = model_to_test
@@ -40,6 +47,7 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
         self.model_name = self.model_to_test.model_name
         self.print_ongoing_status = print_ongoing_status
         self.insertion_percentages = []
+        self.type = multi_needle_type
 
     async def insert_needles(self, context, depth_percent, context_length):
         """
@@ -65,33 +73,60 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
         Returns:
             str: The new context with needles inserted.
         """
-        tokens_context = self.model_to_test.encode_text_to_tokens(context)
+        if self.provider == "huggingface":
+            tokens_context = self.model_to_test.encode_text_to_tokens(context, no_bos=True)
+        else:
+            tokens_context = self.model_to_test.encode_text_to_tokens(context)
         context_length -= self.final_context_length_buffer
 
         # Calculate the total length of all needles in tokens
-        total_needles_length = sum(len(self.model_to_test.encode_text_to_tokens(needle)) for needle in self.needles)
-
+        if self.provider == "huggingface":
+            total_needles_length = sum(len(self.model_to_test.encode_text_to_tokens(needle, no_bos=True)) for needle in self.needles)
+        else:
+            total_needles_length = sum(len(self.model_to_test.encode_text_to_tokens(needle)) for needle in self.needles)
+        
         # Ensure context length accounts for needles
         if len(tokens_context) + total_needles_length > context_length:
             tokens_context = tokens_context[:context_length - total_needles_length]
         
-        # To evenly distribute the needles, we calculate the intervals they need to be inserted.
-        depth_percent_interval = (100 - depth_percent) / len(self.needles)
-        
-        # Reset the insertion percentages list for the current context
-        self.insertion_percentages = []
+        # Insert the needles with 'depth_percent' method
+        if self.type == "depth_percent":
+            # To evenly distribute the needles, we calculate the intervals they need to be inserted.
+            depth_percent_interval = (100 - depth_percent) / len(self.needles)
+            
+            # Reset the insertion percentages list for the current context
+            self.insertion_percentages = []
+
+        # Insert the needles with 'random' method
+        elif self.type == "random":
+            # Reset the insertion percentages list for the random insertion points
+            self.insertion_percentages = []
+
+            # To randomly and evenly distribute the needles, we calculate the insertion range and range intervals.
+            num_needles = len(self.needles)
+            range_interval = int(100 / num_needles)
+
+            # Generate random insertion points for each needle based on the range interval.
+            for i in range(num_needles):
+                self.insertion_percentages.append(random.randrange(i * range_interval, (i + 1) * range_interval))
 
         # Insert needles at calculated points
-        for needle in self.needles:
+        for i in range(len(self.needles)):
 
-            tokens_needle = self.model_to_test.encode_text_to_tokens(needle)
+            if self.provider == "huggingface":
+                tokens_needle = self.model_to_test.encode_text_to_tokens(self.needles[i], no_bos=True)
+            else:
+                tokens_needle = self.model_to_test.encode_text_to_tokens(self.needles[i])
 
             if depth_percent == 100:
                 # If your depth percent is 100 (which means your needle is the last thing in the doc), throw it at the end
                 tokens_context = tokens_context + tokens_needle
             else:
                 # Go get the position (in terms of tokens) to insert your needle
-                insertion_point = int(len(tokens_context) * (depth_percent / 100))
+                if self.type == "random":
+                    insertion_point = int(len(tokens_context) * (self.insertion_percentages[i] / 100))    
+                elif self.type == "depth_percent":
+                    insertion_point = int(len(tokens_context) * (depth_percent / 100))
 
                 # tokens_new_context represents the tokens before the needle
                 tokens_new_context = tokens_context[:insertion_point]
@@ -109,11 +144,16 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
 
                 # Log 
                 insertion_percentage = (insertion_point / len(tokens_context)) * 100
-                self.insertion_percentages.append(insertion_percentage)
-                print(f"Inserted '{needle}' at {insertion_percentage:.2f}% of the context, total length now: {len(tokens_context)} tokens")
                 
-                # Adjust depth for next needle
-                depth_percent += depth_percent_interval  
+                if self.type == "random":
+                    self.insertion_percentages[i] = insertion_percentage
+
+                if self.type == "depth_percent":
+                    self.insertion_percentages.append(insertion_percentage)
+                    # Adjust depth for next needle
+                    depth_percent += depth_percent_interval
+
+                print(f"Inserted '{self.needles[i]}' at {insertion_percentage:.2f}% of the context, total length now: {len(tokens_context)} tokens")
 
         new_context = self.model_to_test.decode_tokens(tokens_context)
         return new_context
@@ -129,7 +169,11 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
         Returns:
             str: The encoded and trimmed context.
         """
-        tokens = self.model_to_test.encode_text_to_tokens(context)
+        if self.provider == "huggingface":
+            tokens = self.model_to_test.encode_text_to_tokens(context, no_bos=True)
+        else:
+            tokens = self.model_to_test.encode_text_to_tokens(context)
+
         if len(tokens) > context_length:
             context = self.model_to_test.decode_tokens(tokens, context_length)
         return context
@@ -211,7 +255,7 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
                 print (f"Score: {score}")
                 print (f"Response: {response}\n")
 
-            context_file_location = f'{self.model_name.replace(".", "_")}_len_{context_length}_depth_{int(depth_percent*100)}'
+            context_file_location = f'{self.model_name.split("/")[-1].replace(".", "_")}_len_{context_length}_depth_{int(depth_percent*100)}'
 
             if self.save_contexts:
                 results['file_name'] = context_file_location
