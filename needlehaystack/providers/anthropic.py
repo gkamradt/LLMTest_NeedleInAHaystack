@@ -1,15 +1,14 @@
-import os
 import pkg_resources
+
+from .model import ModelProvider
+from ..utils import get_from_env_or_error
 
 from operator import itemgetter
 from typing import Optional
-
 from anthropic import AsyncAnthropic
 from anthropic import Anthropic as AnthropicModel
 from langchain_anthropic import ChatAnthropic
 from langchain.prompts import PromptTemplate
-
-from .model import ModelProvider
 
 class Anthropic(ModelProvider):
     DEFAULT_MODEL_KWARGS: dict = dict(max_tokens_to_sample  = 300,
@@ -26,13 +25,12 @@ class Anthropic(ModelProvider):
         if "claude" not in model_name:
             raise ValueError("If the model provider is 'anthropic', the model name must include 'claude'. See https://docs.anthropic.com/claude/reference/selecting-a-model for more details on Anthropic models")
         
-        api_key = os.getenv('NIAH_MODEL_API_KEY')
-        if (not api_key):
-            raise ValueError("NIAH_MODEL_API_KEY must be in env.")
-
         self.model_name = model_name
         self.model_kwargs = model_kwargs
-        self.api_key = api_key
+        self.api_key = get_from_env_or_error(
+            env_key="NIAH_MODEL_API_KEY",
+            error_message="{env_key} must be in env for using Anthropic model."
+        )
 
         self.model = AsyncAnthropic(api_key=self.api_key)
         self.tokenizer = AnthropicModel().get_tokenizer()
