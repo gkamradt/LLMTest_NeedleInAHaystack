@@ -104,7 +104,7 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
 
             # To randomly and evenly distribute the needles, we calculate the insertion range and range intervals.
             num_needles = len(self.needles)
-            range_interval = 100 / num_needles
+            range_interval = int(100 / num_needles)
 
             # Generate random insertion points for each needle based on the range interval.
             for i in range(num_needles):
@@ -154,9 +154,6 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
                     depth_percent += depth_percent_interval
 
                 print(f"Inserted '{self.needles[i]}' at {insertion_percentage:.2f}% of the context, total length now: {len(tokens_context)} tokens")
-                
-                # Adjust depth for next needle
-                depth_percent += depth_percent_interval  
 
         new_context = self.model_to_test.decode_tokens(tokens_context)
         return new_context
@@ -258,7 +255,7 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
                 print (f"Score: {score}")
                 print (f"Response: {response}\n")
 
-            context_file_location = f'{self.model_name.replace(".", "_")}_len_{context_length}_depth_{int(depth_percent*100)}'
+            context_file_location = f'{self.model_name.split("/")[-1].replace(".", "_")}_len_{context_length}_depth_{int(depth_percent*100)}'
 
             if self.save_contexts:
                 results['file_name'] = context_file_location
