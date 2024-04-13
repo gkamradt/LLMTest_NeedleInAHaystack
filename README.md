@@ -112,9 +112,8 @@ The package `needlehaystack` is available for import in your test cases. Develop
 - `print_ongoing_status` - Default: True, whether or not to print the status of test as they complete
 
 `LLMMultiNeedleHaystackTester` parameters:
-
-- `multi_needle` - True or False, whether to run multi-needle
-- `needles` - List of needles to insert in the context
+* `needles` - List of needles to insert in the context
+* `eval_set` - The evaluation set identifier.
 
 Other Parameters:
 
@@ -167,18 +166,16 @@ Needle 10: 40 + 9 * 6 = 94
 
 You can use LangSmith to orchestrate evals and store results.
 
-(1) Sign up for [LangSmith](https://docs.smith.langchain.com/setup)
-(2) Set env variables for LangSmith as specified in the setup.
-(3) In the `Datasets + Testing` tab, use `+ Dataset` to create a new dataset, call it `multi-needle-eval-sf` to start.
-(4) Populate the dataset with a test question:
-
-```
-question: What are the 5 best things to do in San Franscisco?
-answer: "The 5 best things to do in San Francisco are: 1) Go to Dolores Park. 2) Eat at Tony's Pizza Napoletana. 3) Visit Alcatraz. 4) Hike up Twin Peaks. 5) Bike across the Golden Gate Bridge"
-```
-
-![Screenshot 2024-03-05 at 4 54 15 PM](https://github.com/rlancemartin/LLMTest_NeedleInAHaystack/assets/122662504/2f903955-ed1d-49cc-b995-ed0407d6212a)
-(5) Run with ` --evaluator langsmith` and `--eval_set multi-needle-eval-sf` to run against our recently created eval set.
+1. Sign up for [LangSmith](https://docs.smith.langchain.com/setup)
+2. Set env variables for LangSmith as specified in the setup.
+3. In the `Datasets + Testing` tab, use `+ Dataset` to create a new dataset, call it `multi-needle-eval-sf` and set dataset type to `Key-Value`.
+4. Populate the dataset with a test question:
+    ```
+    question: What are the 5 best things to do in San Franscisco?
+    answer: "The 5 best things to do in San Francisco are: 1) Go to Dolores Park. 2) Eat at Tony's Pizza Napoletana. 3) Visit Alcatraz. 4) Hike up Twin Peaks. 5) Bike across the Golden Gate Bridge"
+    ```
+    ![Screenshot 2024-03-05 at 4 54 15 PM](https://github.com/rlancemartin/LLMTest_NeedleInAHaystack/assets/122662504/2f903955-ed1d-49cc-b995-ed0407d6212a)
+5. Run with ` --evaluator langsmith` and `--eval_set multi-needle-eval-sf` to run against our recently created eval set.
 
 Let's see all these working together on a new dataset, `multi-needle-eval-pizza`.
 
