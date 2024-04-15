@@ -2,7 +2,7 @@
 
 A simple 'needle in a haystack' analysis to test in-context retrieval ability of long context LLMs.
 
-Supported model providers: OpenAI, Anthropic, Amazon Bedrock
+Supported model providers: OpenAI, Anthropic, Cohere, Amazon Bedrock
 
 Get the behind the scenes on the [overview video](https://youtu.be/KwRRuiCCdmc).
 
@@ -46,9 +46,9 @@ pip install needlehaystack
 
 Start using the package by calling the entry point `needlehaystack.run_test` from command line.
 
-You can then run the analysis on OpenAI or Anthropic models with the following command line arguments:
+You can then run the analysis on OpenAI, Anthropic, or Cohere models with the following command line arguments:
 
-- `provider` - The provider of the model, available options are `openai`, `anthropic` and `bedrock`. Defaults to `openai`
+- `provider` - The provider of the model, available options are `openai`, `anthropic`, `cohere`  and `bedrock`. Defaults to `openai`
 - `evaluator` - The evaluator, which can either be a `model` or `LangSmith`. See more on `LangSmith` below. If using a `model`, only `openai` is currently supported. Defaults to `openai`.
 - `model_name` - Model name of the language model accessible by the provider. Defaults to `gpt-3.5-turbo-0125`
 - `evaluator_model_name` - Model name of the language model accessible by the evaluator. Defaults to `gpt-3.5-turbo-0125`
@@ -69,6 +69,11 @@ Following command runs the test for anthropic model `claude-2.1` for a single co
 needlehaystack.run_test --provider anthropic --model_name "claude-2.1" --document_depth_percents "[50]" --context_lengths "[2000]"
 ```
 
+Following command runs the test for cohere model `command-r` for a single context length of 2000 and single document depth of 50%.
+
+```zsh
+needlehaystack.run_test --provider cohere --model_name "command-r" --document_depth_percents "[50]" --context_lengths "[2000]"
+```
 ### For Contributors
 
 1. Fork and clone the repository.

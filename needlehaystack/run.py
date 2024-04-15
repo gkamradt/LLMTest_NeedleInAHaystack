@@ -6,7 +6,7 @@ from jsonargparse import CLI
 
 from . import LLMNeedleHaystackTester, LLMMultiNeedleHaystackTester
 from .evaluators import Evaluator, LangSmithEvaluator, OpenAIEvaluator
-from .providers import Anthropic, ModelProvider, OpenAI, Bedrock
+from .providers import Anthropic, ModelProvider, OpenAI, Cohere, Bedrock
 
 load_dotenv()
 
@@ -63,7 +63,9 @@ def get_model_to_test(args: CommandArgs) -> ModelProvider:
         case "openai":
             return OpenAI(model_name=args.model_name, model_kwargs=args.model_kwargs)
         case "anthropic":
-            return Anthropic(model_name=args.model_name, model_kwargs=args.model_kwargs)
+            return Anthropic(model_name=args.model_name)
+        case "cohere":
+            return Cohere(model_name=args.model_name)
         case "bedrock":
             return Bedrock(model_name=args.model_name, model_kwargs=args.model_kwargs)
         case _:
