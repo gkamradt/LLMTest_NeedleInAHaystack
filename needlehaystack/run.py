@@ -6,7 +6,7 @@ from jsonargparse import CLI
 
 from . import LLMNeedleHaystackTester, LLMMultiNeedleHaystackTester
 from .evaluators import Evaluator, LangSmithEvaluator, OpenAIEvaluator
-from .providers import Anthropic, ModelProvider, OpenAI, Cohere
+from .providers import Anthropic, ModelProvider, OpenAI, Cohere, Bedrock
 
 load_dotenv()
 
@@ -15,6 +15,7 @@ class CommandArgs():
     provider: str = "openai"
     evaluator: str = "openai"
     model_name: str = "gpt-3.5-turbo-0125"
+    model_kwargs: dict = field(default_factory=lambda: dict(max_tokens = 300, temperature = 0))
     evaluator_model_name: Optional[str] = "gpt-3.5-turbo-0125"
     needle: Optional[str] = "\nThe best thing to do in San Francisco is eat a sandwich and sit in Dolores Park on a sunny day.\n"
     haystack_dir: Optional[str] = "PaulGrahamEssays"
@@ -60,11 +61,13 @@ def get_model_to_test(args: CommandArgs) -> ModelProvider:
     """
     match args.provider.lower():
         case "openai":
-            return OpenAI(model_name=args.model_name)
+            return OpenAI(model_name=args.model_name, model_kwargs=args.model_kwargs)
         case "anthropic":
             return Anthropic(model_name=args.model_name)
         case "cohere":
             return Cohere(model_name=args.model_name)
+        case "bedrock":
+            return Bedrock(model_name=args.model_name, model_kwargs=args.model_kwargs)
         case _:
             raise ValueError(f"Invalid provider: {args.provider}")
 
