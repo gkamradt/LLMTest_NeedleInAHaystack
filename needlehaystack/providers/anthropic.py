@@ -37,24 +37,37 @@ class Anthropic(ModelProvider):
         self.model = AsyncAnthropic(api_key=self.api_key)
         self.tokenizer = AnthropicModel().get_tokenizer()
 
-        resource_path = pkg_resources.resource_filename('needlehaystack', 'providers/Anthropic_prompt.txt')
-
-        # Generate the prompt structure for the Anthropic model
-        # Replace the following file with the appropriate prompt structure
-        with open(resource_path, 'r') as file:
-            self.prompt_structure = file.read()
-
     async def evaluate_model(self, prompt: str) -> str:
-        response = await self.model.completions.create(
+        response = await self.model.messages.create(
             model=self.model_name,
-            prompt=prompt,
-            **self.model_kwargs)
-        return response.completion
+            messages=prompt,
+            system="You are a helpful AI bot that answers questions for a user. Keep your response short and direct",
+            max_tokens=300,
+            temperature=0
+        )
+        return response.content[0].text
 
     def generate_prompt(self, context: str, retrieval_question: str) -> str | list[dict[str, str]]:
-        return self.prompt_structure.format(
-            retrieval_question=retrieval_question,
-            context=context)
+        """
+        Generates a structured prompt for querying the model, based on a given context and retrieval question.
+
+        Args:
+            context (str): The context or background information relevant to the question.
+            retrieval_question (str): The specific question to be answered by the model.
+
+        Returns:
+            list[dict[str, str]]: A list of dictionaries representing the structured prompt, including roles and content for system and user messages.
+        """
+        return [
+            {
+                "role": "user",
+                "content": f"<context>\n{context}\n<context>\n\n {retrieval_question} Don't give information outside the document or repeat your findings"
+            },
+            {
+                "role": "assistant",
+                "content": "Here is the most relevant sentence in the context:"
+            }
+        ]
     
     def encode_text_to_tokens(self, text: str) -> list[int]:
         return self.tokenizer.encode(text).ids
