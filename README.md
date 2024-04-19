@@ -2,7 +2,7 @@
 
 A simple 'needle in a haystack' analysis to test in-context retrieval ability of long context LLMs.
 
-Supported model providers: OpenAI, Anthropic
+Supported model providers: OpenAI, Anthropic, Databricks
 
 Get the behind the scenes on the [overview video](https://youtu.be/KwRRuiCCdmc).
 
@@ -31,7 +31,7 @@ source venv/bin/activate
 
 ### Environment Variables
 
-- `NIAH_MODEL_API_KEY` - API key for interacting with the model. Depending on the provider, this gets used appropriately with the correct sdk.
+- `NIAH_MODEL_API_KEY` - API key for interacting with the model. Depending on the provider, this gets used appropriately with the correct sdk. _(For using databricks the key value would be your generated [Personnal Access Token](https://docs.databricks.com/en/dev-tools/auth/pat.html#databricks-personal-access-tokens-for-workspace-users))
 - `NIAH_EVALUATOR_API_KEY` - API key to use if `openai` evaluation strategy is used.
 
 ### Install Package
@@ -48,7 +48,7 @@ Start using the package by calling the entry point `needlehaystack.run_test` fro
 
 You can then run the analysis on OpenAI or Anthropic models with the following command line arguments:
 
-- `provider` - The provider of the model, available options are `openai` and `anthropic`. Defaults to `openai`
+- `provider` - The provider of the model, available options are `openai`, `anthropic` and `databricks`. Defaults to `openai`
 - `evaluator` - The evaluator, which can either be a `model` or `LangSmith`. See more on `LangSmith` below. If using a `model`, only `openai` is currently supported. Defaults to `openai`.
 - `model_name` - Model name of the language model accessible by the provider. Defaults to `gpt-3.5-turbo-0125`
 - `evaluator_model_name` - Model name of the language model accessible by the evaluator. Defaults to `gpt-3.5-turbo-0125`
@@ -69,6 +69,15 @@ Following command runs the test for anthropic model `claude-2.1` for a single co
 needlehaystack.run_test --provider anthropic --model_name "claude-2.1" --document_depth_percents "[50]" --context_lengths "[2000]"
 ```
 
+Following command runs the test for databricks model `databricks-dbrx-instruct` for a single context length of 2000 and single document depth of 50%.
+
+```zsh
+needlehaystack.run_test --base_url "https://<deployment-name>.cloud.databricks.com/serving-endpoints" --provider databricks --model_name "databricks-dbrx-instruct" --document_depth_percents "[50]" --context_lengths "[2000]"
+```
+
+#### Run test on databricks notebook
+If you have a databricks workspace and would like to use the package in an interactive notebook environment, you can clone the repo from your databricks workspace and open the [run_on_databricks](/needlehaystack/run_on_databricks.ipynb) notebook attach it to a cluster and follow the instructions.
+
 ### For Contributors
 
 1. Fork and clone the repository.
@@ -88,6 +97,8 @@ The package `needlehaystack` is available for import in your test cases. Develop
 - `evaluator` - An evaluator to evaluate the model's response. Default is None.
 - `needle` - The statement or fact which will be placed in your context ('haystack')
 - `haystack_dir` - The directory which contains the text files to load as background context. Only text files are supported
+- `contexts_dir` - The directory which will store the sent contexts during the test (one .json per sent context). Default is `/contexts`
+- `results_dir` - The directory which will store the received completions/results during the test (one .json per received completion). Default is `/results`
 - `retrieval_question` - The question with which to retrieve your needle in the background context
 - `results_version` - You may want to run your test multiple times for the same combination of length/depth, change the version number if so
 - `num_concurrent_requests` - Default: 1. Set higher if you'd like to run more requests in parallel. Keep in mind rate limits.
