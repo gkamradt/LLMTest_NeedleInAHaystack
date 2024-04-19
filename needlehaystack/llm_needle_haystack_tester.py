@@ -6,8 +6,8 @@ import time
 
 import numpy as np
 
-from evaluators import Evaluator #
-from providers import ModelProvider #
+from .evaluators import Evaluator
+from .providers import ModelProvider
 
 from asyncio import Semaphore
 from datetime import datetime, timezone
@@ -78,8 +78,10 @@ class LLMNeedleHaystackTester:
         self.results_version = results_version
         self.num_concurrent_requests = num_concurrent_requests
         self.save_results = save_results
+        self.results_dir = results_dir
         self.final_context_length_buffer = final_context_length_buffer
         self.save_contexts = save_contexts
+        self.contexts_dir = contexts_dir
         self.seconds_to_sleep_between_completions = seconds_to_sleep_between_completions
         self.print_ongoing_status = print_ongoing_status
         self.testing_results = []
@@ -199,11 +201,11 @@ class LLMNeedleHaystackTester:
                 f.write(context)
             
         if self.save_results:
-            # Save the context to file for retesting
+            # Save the results to file for retesting
             if not os.path.exists(self.results_dir):
                 os.makedirs(self.results_dir)
 
-            # Save the result to file for retesting
+            # Save the result to file for visualisation
             with open(f'{self.results_dir}/{context_file_location}_results.json', 'w') as f:
                 json.dump(results, f)
 
@@ -215,7 +217,7 @@ class LLMNeedleHaystackTester:
         Checks to see if a result has already been evaluated or not
         """
 
-        results_dir = 'results/'
+        results_dir = self.results_dir
         if not os.path.exists(results_dir):
             return False
         
@@ -288,7 +290,10 @@ class LLMNeedleHaystackTester:
     def read_context_files(self):
         context = ""
         max_context_length = max(self.context_lengths)
-        base_dir = os.path.abspath(os.path.dirname(__file__))  # Package directory
+        if not os.path.exists(self.haystack_dir):
+            base_dir = os.path.abspath(os.path.dirname(__file__))  # Package directory
+        else:
+            base_dir = ""
 
         while self.get_context_length_in_tokens(context) < max_context_length:
             for file in glob.glob(os.path.join(base_dir, self.haystack_dir, "*.txt")):
@@ -317,4 +322,5 @@ class LLMNeedleHaystackTester:
     def start_test(self):
         if self.print_ongoing_status:
             self.print_start_test_summary()
+
         asyncio.run(self.run_test())
