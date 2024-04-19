@@ -34,7 +34,9 @@ class LLMNeedleHaystackTester:
                  document_depth_percent_interval_type = "linear",
                  num_concurrent_requests = 1,
                  save_results = True,
+                 results_dir = "results",
                  save_contexts = True,
+                 contexts_dir = "contexts",
                  final_context_length_buffer = 200,
                  seconds_to_sleep_between_completions = None,
                  print_ongoing_status = True,
@@ -47,8 +49,10 @@ class LLMNeedleHaystackTester:
         :param retrieval_question: The question which with to prompt the model to do the retrieval.
         :param results_version: In case you would like to try the same combination of model, context length, and depth % multiple times, change the results version other than 1
         :param num_concurrent_requests: Due to volume, this object is set up to run concurrent requests, default = 1. Be careful of rate limits.
-        :param save_results: Whether or not you would like to save your contexts to file. Warning: These will get long! Default = True
+        :param save_results: Whether or not you would like to save your results to file. Default = True
+        :param results_dir: Directory path to save your results to file.  Default = 'results'
         :param save_contexts: Whether or not you would like to save your contexts to file. Warning: These will get long! Default is True.
+        :param contexts_dir: Directory path to save your contexts to file.  Default = 'contexts'
         :param final_context_length_buffer: The amount of cushion you'd like to leave off the input context to allow for the output context. Default 200 tokens
         :param context_lengths_min: The minimum length of the context. Default is 1000.
         :param context_lengths_max: The maximum length of the context. Default is 200000.
@@ -74,8 +78,10 @@ class LLMNeedleHaystackTester:
         self.results_version = results_version
         self.num_concurrent_requests = num_concurrent_requests
         self.save_results = save_results
+        self.results_dir = results_dir
         self.final_context_length_buffer = final_context_length_buffer
         self.save_contexts = save_contexts
+        self.contexts_dir = contexts_dir
         self.seconds_to_sleep_between_completions = seconds_to_sleep_between_completions
         self.print_ongoing_status = print_ongoing_status
         self.testing_results = []
@@ -188,19 +194,19 @@ class LLMNeedleHaystackTester:
             results['file_name'] = context_file_location
 
             # Save the context to file for retesting
-            if not os.path.exists('contexts'):
-                os.makedirs('contexts')
+            if not os.path.exists(self.contexts_dir):
+                os.makedirs(self.contexts_dir)
 
-            with open(f'contexts/{context_file_location}_context.txt', 'w') as f:
+            with open(f'{self.contexts_dir}/{context_file_location}_context.txt', 'w') as f:
                 f.write(context)
             
         if self.save_results:
-            # Save the context to file for retesting
-            if not os.path.exists('results'):
-                os.makedirs('results')
+            # Save the results to file for retesting
+            if not os.path.exists(self.results_dir):
+                os.makedirs(self.results_dir)
 
-            # Save the result to file for retesting
-            with open(f'results/{context_file_location}_results.json', 'w') as f:
+            # Save the result to file for visualisation
+            with open(f'{self.results_dir}/{context_file_location}_results.json', 'w') as f:
                 json.dump(results, f)
 
         if self.seconds_to_sleep_between_completions:
@@ -211,7 +217,7 @@ class LLMNeedleHaystackTester:
         Checks to see if a result has already been evaluated or not
         """
 
-        results_dir = 'results/'
+        results_dir = self.results_dir
         if not os.path.exists(results_dir):
             return False
         
@@ -284,7 +290,10 @@ class LLMNeedleHaystackTester:
     def read_context_files(self):
         context = ""
         max_context_length = max(self.context_lengths)
-        base_dir = os.path.abspath(os.path.dirname(__file__))  # Package directory
+        if not os.path.exists(self.haystack_dir):
+            base_dir = os.path.abspath(os.path.dirname(__file__))  # Package directory
+        else:
+            base_dir = ""
 
         while self.get_context_length_in_tokens(context) < max_context_length:
             for file in glob.glob(os.path.join(base_dir, self.haystack_dir, "*.txt")):
@@ -313,4 +322,5 @@ class LLMNeedleHaystackTester:
     def start_test(self):
         if self.print_ongoing_status:
             self.print_start_test_summary()
+
         asyncio.run(self.run_test())
