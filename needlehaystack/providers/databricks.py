@@ -22,7 +22,7 @@ class Databricks(OpenAI):
     """
 
     DEFAULT_MODEL_KWARGS: dict = dict(max_tokens  = 300,
-                                      temperature = 0)
+                                      temperature = 0.01)
 
     def __init__(self,
                  base_url: str,
@@ -49,8 +49,15 @@ class Databricks(OpenAI):
             api_key=self.api_key,
             base_url=base_url)
         
-        # Set tokenizer (#TODO later more dynamically based on model name)
-        self.tokenizer = AutoTokenizer.from_pretrained("rajammanabrolu/gpt-4-chat", trust_remote_code=True)
+        # Set tokenizer
+        if model_name == "databricks-dbrx-instruct":
+            self.tokenizer = AutoTokenizer.from_pretrained("databricks/dbrx-instruct", token=os.getenv('HF_PAT_KEY'))
+        else:
+            # Guesstimate - CHANGE THIS IN CASE WRONG TOKENIZER IS GETTING PULLED
+            model_tags = model_name.split("-")
+            provider = model_tags[0]
+            model = "-".join(model_tags[1::])
+            self.tokenizer = AutoTokenizer.from_pretrained(f"{provider}/{model}", trust_remote_code=True)
         
     
     def generate_prompt(self, context: str, retrieval_question: str) -> str | list[dict[str, str]]:
