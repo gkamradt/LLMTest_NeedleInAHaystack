@@ -6,7 +6,7 @@ from jsonargparse import CLI
 
 from . import LLMNeedleHaystackTester, LLMMultiNeedleHaystackTester
 from .evaluators import Evaluator, LangSmithEvaluator, OpenAIEvaluator
-from .providers import Anthropic, ModelProvider, OpenAI, Cohere
+from .providers import Anthropic, ModelProvider, OpenAI, Cohere, Databricks
 
 load_dotenv()
 
@@ -15,6 +15,7 @@ class CommandArgs():
     provider: str = "openai"
     evaluator: str = "openai"
     model_name: str = "gpt-3.5-turbo-0125"
+    base_url: Optional[str] = None
     evaluator_model_name: Optional[str] = "gpt-3.5-turbo-0125"
     needle: Optional[str] = "\nThe best thing to do in San Francisco is eat a sandwich and sit in Dolores Park on a sunny day.\n"
     haystack_dir: Optional[str] = "PaulGrahamEssays"
@@ -63,6 +64,8 @@ def get_model_to_test(args: CommandArgs) -> ModelProvider:
             return OpenAI(model_name=args.model_name)
         case "anthropic":
             return Anthropic(model_name=args.model_name)
+        case "databricks":
+            return Databricks(model_name=args.model_name, base_url=args.base_url)
         case "cohere":
             return Cohere(model_name=args.model_name)
         case _:
