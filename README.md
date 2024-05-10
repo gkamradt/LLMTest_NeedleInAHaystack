@@ -33,6 +33,7 @@ source venv/bin/activate
 
 - `NIAH_MODEL_API_KEY` - API key for interacting with the model. Depending on the provider, this gets used appropriately with the correct sdk. _(For using databricks the key value would be your generated [Personnal Access Token](https://docs.databricks.com/en/dev-tools/auth/pat.html#databricks-personal-access-tokens-for-workspace-users))_
 - `NIAH_EVALUATOR_API_KEY` - API key to use if `openai` evaluation strategy is used.
+- `HF_PAT_Key` _[OPTIONAL]_ - Huggingface PAT token if to pull model's tokenizer being tested from huggingface
 
 ### Install Package
 
