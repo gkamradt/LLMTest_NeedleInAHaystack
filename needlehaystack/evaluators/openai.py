@@ -39,10 +39,15 @@ class OpenAIEvaluator(Evaluator):
         if (not api_key):
             raise ValueError("NIAH_EVALUATOR_API_KEY must be in env for using openai evaluator.")
 
-        self.api_key = api_key
+        api_base = os.getenv("NIAH_MODEL_API_BASE")
+        if (not api_base):
+            raise ValueError("NIAH_MODEL_API_BASE must be in env.")
         
+        self.api_key = api_key
+        self.api_base = api_base 
         self.evaluator = ChatOpenAI(model=self.model_name,
                                     openai_api_key=self.api_key,
+                                    openai_api_base=self.api_base,
                                     **self.model_kwargs)
 
     def evaluate_response(self, response: str) -> int:

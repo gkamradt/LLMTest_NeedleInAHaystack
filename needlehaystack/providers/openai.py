@@ -36,15 +36,21 @@ class OpenAI(ModelProvider):
         
         Raises:
             ValueError: If NIAH_MODEL_API_KEY is not found in the environment.
+            ValueError: If NIAH_MODEL_API_BASE is not found in the environment. 
         """
         api_key = os.getenv('NIAH_MODEL_API_KEY')
         if (not api_key):
             raise ValueError("NIAH_MODEL_API_KEY must be in env.")
 
+        api_base = os.getenv("NIAH_MODEL_API_BASE")
+        if (not api_base):
+            raise ValueError("NIAH_MODEL_API_BASE must be in env.")
+    
         self.model_name = model_name
         self.model_kwargs = model_kwargs
         self.api_key = api_key
-        self.model = AsyncOpenAI(api_key=self.api_key)
+        self.api_base = api_base
+        self.model = AsyncOpenAI(api_key=self.api_key, base_url=self.api_base)
         self.tokenizer = tiktoken.encoding_for_model(self.model_name)
     
     async def evaluate_model(self, prompt: str) -> str:
