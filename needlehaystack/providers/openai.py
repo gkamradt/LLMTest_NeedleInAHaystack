@@ -41,10 +41,15 @@ class OpenAI(ModelProvider):
         if (not api_key):
             raise ValueError("NIAH_MODEL_API_KEY must be in env.")
 
+        api_base = os.getenv("NIAH_MODEL_API_BASE")
+        if api_base is None:
+            api_base = f"https://api.openai.com/v1"
+    
         self.model_name = model_name
         self.model_kwargs = model_kwargs
         self.api_key = api_key
-        self.model = AsyncOpenAI(api_key=self.api_key)
+        self.api_base = api_base
+        self.model = AsyncOpenAI(api_key=self.api_key, base_url=self.api_base)
         self.tokenizer = tiktoken.encoding_for_model(self.model_name)
     
     async def evaluate_model(self, prompt: str) -> str:
