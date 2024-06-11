@@ -40,8 +40,8 @@ class OpenAIEvaluator(Evaluator):
             raise ValueError("NIAH_EVALUATOR_API_KEY must be in env for using openai evaluator.")
 
         api_base = os.getenv("NIAH_MODEL_API_BASE")
-        if (not api_base):
-            raise ValueError("NIAH_MODEL_API_BASE must be in env.")
+        if api_base is None:
+            api_base = f"https://api.openai.com/v1"
         
         self.api_key = api_key
         self.api_base = api_base 

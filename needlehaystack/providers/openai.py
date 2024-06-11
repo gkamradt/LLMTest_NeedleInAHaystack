@@ -36,15 +36,14 @@ class OpenAI(ModelProvider):
         
         Raises:
             ValueError: If NIAH_MODEL_API_KEY is not found in the environment.
-            ValueError: If NIAH_MODEL_API_BASE is not found in the environment. 
         """
         api_key = os.getenv('NIAH_MODEL_API_KEY')
         if (not api_key):
             raise ValueError("NIAH_MODEL_API_KEY must be in env.")
 
         api_base = os.getenv("NIAH_MODEL_API_BASE")
-        if (not api_base):
-            raise ValueError("NIAH_MODEL_API_BASE must be in env.")
+        if api_base is None:
+            api_base = f"https://api.openai.com/v1"
     
         self.model_name = model_name
         self.model_kwargs = model_kwargs
