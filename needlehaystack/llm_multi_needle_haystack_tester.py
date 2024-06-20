@@ -183,7 +183,7 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
             # Go see if the model can answer the question to pull out your random fact
             response = await self.model_to_test.evaluate_model(prompt)
             # Compare the reponse to the actual needle you placed
-            score = self.evaluation_model.evaluate_response(response)
+            score = self.evaluator.evaluate_response(response)
 
             test_end_time = time.time()
             test_elapsed_time = test_end_time - test_start_time
@@ -194,7 +194,7 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
             'context_length' : int(context_length),
             'depth_percent' : float(depth_percent),
             'version' : self.results_version,
-            'needle' : self.needle,
+            'needle' : self.needles,
             'model_response' : response,
             'score' : score,
             'test_duration_seconds' : test_elapsed_time,

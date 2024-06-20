@@ -107,7 +107,7 @@ class LLMNeedleHaystackTester:
         self.model_to_test = model_to_test
         self.model_name = self.model_to_test.model_name
         
-        self.evaluation_model = evaluator
+        self.evaluator = evaluator
 
     def logistic(self, x, L=100, x0=50, k=.1):
         if x in [0, 100]:
@@ -157,7 +157,7 @@ class LLMNeedleHaystackTester:
         test_elapsed_time = test_end_time - test_start_time
 
         # Compare the reponse to the actual needle you placed
-        score = self.evaluation_model.evaluate_response(response)
+        score = self.evaluator.evaluate_response(response)
 
         results = {
             # 'context' : context, # Uncomment this line if you'd like to save the context the model was asked to retrieve from. Warning: This will become very large.
