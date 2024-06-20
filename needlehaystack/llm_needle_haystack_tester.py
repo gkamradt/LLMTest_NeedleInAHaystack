@@ -107,7 +107,7 @@ class LLMNeedleHaystackTester:
         self.model_to_test = model_to_test
         self.model_name = self.model_to_test.model_name
         
-        self.evaluation_model = evaluator
+        self.evaluator = evaluator
 
     def logistic(self, x, L=100, x0=50, k=.1):
         if x in [0, 100]:
