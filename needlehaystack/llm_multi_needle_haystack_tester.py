@@ -194,7 +194,7 @@ class LLMMultiNeedleHaystackTester(LLMNeedleHaystackTester):
             'context_length' : int(context_length),
             'depth_percent' : float(depth_percent),
             'version' : self.results_version,
-            'needle' : self.needle,
+            'needle' : self.needles,
             'model_response' : response,
             'score' : score,
             'test_duration_seconds' : test_elapsed_time,
